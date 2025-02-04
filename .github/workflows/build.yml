@@ -1,4 +1,4 @@
-name: build-test
+name: backend-build
 on: push
 jobs: 
   build:
@@ -10,6 +10,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-      - run: cd amplify
-      - run: npm install
-      - run: npm run build
+      - run: |
+          npm install
+          cd amplify
+          npm install
+          npm run build
