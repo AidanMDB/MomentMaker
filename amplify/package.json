@@ -1,3 +1,7 @@
 {
-  "type": "module"
+  "type": "module",
+  "scripts": {
+      "clean": "rimraf amplifyJS",
+      "build": "npm run clean && tsc"
+    }
 }

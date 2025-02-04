@@ -12,6 +12,8 @@
       "$amplify/*": [
         "../.amplify/generated/*"
       ]
-    }
+    },
+    "outDir": "./amplifyJS",                                   /* Specify an output folder for all emitted files. */
+    
   }
 }
