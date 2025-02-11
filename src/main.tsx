@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./CreateMoment.tsx";
+import App from "./Library.tsx";
 import { Amplify } from "aws-amplify";
 import outputs from "../amplify_outputs.json";
 
