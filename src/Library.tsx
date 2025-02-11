@@ -1,27 +1,61 @@
-import { useState } from "react";
-import "./Library.css"
+import { useState, useRef } from "react";
 import { Menu } from "lucide-react";
+import { uploadData } from 'aws-amplify/storage';
+import "./Library.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 export default function Library() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    
     const toggleDropdown = () => {
         setIsDropdownOpen((prev) => !prev);
     };
-
+    
     const handleSelect = (option: string) => {
         alert(`You selected: ${option}`);
         setIsDropdownOpen(false);
     };
-
+    
     const handleMediaTabClick = (option: string) => {
         alert(`You selected: ${option}`);
     }
+    
+    //Upload
+    const allowedTypes = ["image/jpeg", "image/png", "video/mp4"];
 
-    const handleUpload = () => {
-        alert('Upload button clicked!');
-      };
+    const handleUploadClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            const file = event.target.files[0];
+
+            if (!allowedTypes.includes(file.type)) {
+                alert("Invalid file type. Please select a JPEG, PNG, or MP4 file.");
+                return;
+            }
+
+            try {
+                const result = await uploadData({
+                    path: `${file.name}`,
+                    data: file,
+                    options: {
+                        bucket: 'MediaStorage'
+                    }
+                });
+
+                console.log("Upload successful:", result);
+                alert("Upload successful!");
+            } catch (error) {
+                console.error("Upload failed:", error);
+                alert("Upload failed!");
+            }
+        }
+    };
 
     return (
         <main>
@@ -50,7 +84,13 @@ export default function Library() {
                             <span className="media_clickable_word" onClick={() => handleMediaTabClick('Songs')}> Songs </span>
                             <span className="media_bar"> | </span>
                             <span className="media_clickable_word" onClick={() => handleMediaTabClick('Moments')}> Moments </span>
-                            <button className="upload_button" onClick={() => handleUpload()}>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                style={{ display: "none" }}
+                                onChange={handleFileChange}
+                            />
+                            <button className="upload_button" onClick={handleUploadClick}>
                                 <i className="fas fa-upload"></i>
                             </button>
                         </div> 
