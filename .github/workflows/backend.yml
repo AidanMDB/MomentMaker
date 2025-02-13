@@ -18,14 +18,11 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          cd amplify
-          npm ci
 
       - name: Run lint
         run: npm run lint
-        working-directory: amplify
 
-  build:
+  build-backend:
     runs-on: ubuntu-latest
     needs: lint
     steps:
@@ -50,7 +47,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-backend
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -64,9 +61,6 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          cd amplify
-          npm ci
 
       - name: Run tests
         run: npm test
-        working-directory: amplify
