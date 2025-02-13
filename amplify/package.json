@@ -1,3 +1,12 @@
 {
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "clean": "rimraf amplifyJS",
+    "build": "npm run clean && tsc",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "test": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
 }
