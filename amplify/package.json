@@ -1,7 +1,10 @@
 {
   "type": "module",
   "scripts": {
-      "clean": "rimraf amplifyJS",
-      "build": "npm run clean && tsc"
-    }
+    "clean": "rimraf amplifyJS",
+    "build": "npm run clean && tsc"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.744.0"
+  }
 }
