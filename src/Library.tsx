@@ -19,7 +19,7 @@ export default function Library() {
 
     const photos = [ test_photo,test_photo,test_photo,test_photo,test_photo,test_photo,test_photo,test_photo ];
     const videos = [ test_video,test_video,test_video,test_video,test_video ]
-    const songs = [ song,song,song,song,,song ]
+    const songs = [ song,song,song,song,song ]
     const moments = [ test_photo2,test_photo2,test_photo2,test_photo2,test_photo2 ];
 
     const toggleDropdown = () => {
