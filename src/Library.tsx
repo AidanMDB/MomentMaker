@@ -1,20 +1,18 @@
 import { useState, useRef } from "react";
 import { Menu } from "lucide-react";
 import { uploadData } from 'aws-amplify/storage';
+import { useNavigate } from "react-router-dom";
 import "./Library.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 export default function Library() {
+    const navigate = useNavigate();
+    
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
     const toggleDropdown = () => {
         setIsDropdownOpen((prev) => !prev);
-    };
-    
-    const handleSelect = (option: string) => {
-        alert(`You selected: ${option}`);
-        setIsDropdownOpen(false);
     };
     
     const handleMediaTabClick = (option: string) => {
@@ -41,7 +39,7 @@ export default function Library() {
 
             try {
                 const result = await uploadData({
-                    path: `${file.name}`,
+                    path: `user-media/${file.name}`,
                     data: file,
                     options: {
                         bucket: 'MediaStorage'
@@ -57,20 +55,21 @@ export default function Library() {
         }
     };
 
+    //HTML
     return (
         <main>
             <div className="container">
                 <div className="topbar">
-                    <Menu className="hamburger-icon" size={32} onClick={toggleDropdown} />
-                    <h1 style={{ color: '#2e7875' }}>Library</h1>
+                    <Menu className="hamburger-icon" onClick={toggleDropdown} style={{ color: '#aeaeae' }} size={32} />
+                    <h1 style={{ color: '#aeaeae' }}>Library</h1>
                 </div>
                 {isDropdownOpen && (
                     <div className="dropdown-menu">
-                        <div className="dropdown-item" onClick={() => handleSelect('Library')}>
+                        <div className="dropdown-item" onClick={() => navigate("/library")}>
                             Library
                         </div>
-                        <div className="dropdown-item" onClick={() => handleSelect('Settings')}>
-                            Settings
+                        <div className="dropdown-item" onClick={() => navigate("/createamoment")}>
+                            Create A Moment
                         </div>
                     </div>
                 )}
