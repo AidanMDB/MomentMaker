@@ -91,6 +91,7 @@ div.dropdown-item:hover {
     height: 100%;
     margin: 30px;
     border-radius: 4px;
+    overflow: hidden;
 }
 
 .topbar_media {
@@ -100,6 +101,7 @@ div.dropdown-item:hover {
     background: var(--dark-purple);
     height: 50px;
     border-radius: 4px 4px 0px 0px;
+    flex-shrink: 0; 
 }
 
 .media_clickable_word {
@@ -111,6 +113,10 @@ div.dropdown-item:hover {
 
 .media_clickable_word:hover {
     cursor: pointer;
+}
+
+.media_clickable_word.active {
+    color: #e5e5e5
 }
 
 .media_bar {
@@ -133,4 +139,32 @@ div.dropdown-item:hover {
     padding-right: 5px;
     margin-left: auto;
 }
-  
+
+.media_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    padding: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    height: auto;
+}
+
+.media_item {
+    width: 150px;
+    height: 150px;
+    border-radius: 10px;
+    object-fit: cover;
+    display: block;
+    margin: 10px;
+}
+
+.media_item_audio {
+    width: 150px;
+    border-radius: 10px;
+    object-fit: cover;
+    display: block;
+    color: var(--light-gray);
+}
