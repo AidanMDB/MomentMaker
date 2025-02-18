@@ -1,33 +1,31 @@
 import { useState } from "react";
-import "./CreateMoment.css"
 import { Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import "./CreateMoment.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 export default function Library() {
+    const navigate = useNavigate();
+
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const toggleDropdown = () => {
         setIsDropdownOpen((prev) => !prev);
     };
 
-    const handleSelect = (option: string) => {
-        alert(`You selected: ${option}`);
-        setIsDropdownOpen(false);
-    };
-
     return (
         <main>
             <div className="container">
                 <div className="topbar">
-                    <Menu className="hamburger-icon" size={32} onClick={toggleDropdown} />
-                    <h1 style={{ color: '#2e7875' }}>Create A Moment</h1>
+                <Menu className="hamburger-icon" onClick={toggleDropdown} style={{ color: '#aeaeae' }} size={32} />
+                    <h1 style={{ color: '#aeaeae' }}>Create A Moment</h1>
                 </div>
                 {isDropdownOpen && (
                     <div className="dropdown-menu">
-                        <div className="dropdown-item" onClick={() => handleSelect('Library')}>
+                        <div className="dropdown-item" onClick={() => navigate("/library")}>
                             Library
                         </div>
-                        <div className="dropdown-item" onClick={() => handleSelect('Moment')}>
+                        <div className="dropdown-item" onClick={() => navigate("/createamoment")}>
                             Create A Moment
                         </div>
                     </div>
@@ -35,14 +33,14 @@ export default function Library() {
                 <div className="identification_block">
                     <div className="bottom_container">
                         <div className="topbar_customization">
-                            <h2 style={{ color: '#cf665c' }}>Person Identification</h2>
+                            <h2 style={{ color: '#aeaeae' }}>Person Identification</h2>
                         </div> 
                     </div>
                 </div>
                 <div className="features_block">
                     <div className="bottom_container">
                     <div className="topbar_customization">
-                            <h2 style={{ color: '#cf665c' }}>Personalized Features</h2>
+                            <h2 style={{ color: '#aeaeae' }}>Personalized Features</h2>
                         </div> 
                     </div>
                 </div>
