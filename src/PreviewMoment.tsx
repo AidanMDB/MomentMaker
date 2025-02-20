@@ -1,7 +1,14 @@
 import './PreviewMoment.css';
 import test_video from "./test_moment.mp4";
 
-const Modal = ({ isOpen, onClose, onRedo, onSave }) => {
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onRedo: () => void;
+  onSave: () => void;
+}
+
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
   if (!isOpen) return null;
 
   const handleRedo = () => {
