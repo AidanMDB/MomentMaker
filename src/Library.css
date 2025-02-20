@@ -23,6 +23,9 @@ body {
     width: 100vw;
     justify-content: center;
     align-items: center;
+    overflow-y: auto;
+    scrollbar-width: none;
+    background-color: var(--light-blue);
 }
 
 main {
