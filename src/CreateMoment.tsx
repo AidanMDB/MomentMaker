@@ -1,4 +1,6 @@
 import { useState } from "react";
+
+import PreviewMoment from './PreviewMoment'
 import { Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PersonIdCheckbox from "./PersonIdCheckbox.tsx";
@@ -11,6 +13,7 @@ export default function Library() {
     const navigate = useNavigate();
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isPreviewOpen, setPreviewOpen] = useState(false);
     const [selectedPersons, setSelectedPersons] = useState<string[]>([]);
     const [selectedSong, setSelectedSong] = useState("Happy");
     const [selectedTime, setSelectedTime] = useState("5 minutes");
@@ -22,6 +25,17 @@ export default function Library() {
     const toggleDropdown = () => {
         setIsDropdownOpen((prev) => !prev);
     };
+
+    const openPreview = () => setPreviewOpen(true);
+    const closePreview = () => setPreviewOpen(false);
+
+    const handleRedo = () => {
+        alert("Redo button clicked!");
+      };
+    
+      const handleSave = () => {
+        alert("Save button clicked!");
+      };
 
     return (
         <main>
@@ -67,7 +81,8 @@ export default function Library() {
                         </select>
                     </div>
                 </div>
-                <button className="submit_button"> Submit </button>
+                <button className="submit_button"  onClick={openPreview}> Submit </button>
+                <PreviewMoment isOpen={isPreviewOpen} onClose={closePreview} onRedo={handleRedo} onSave={handleSave} />
             </div>
         </main>
     );
