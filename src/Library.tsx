@@ -76,7 +76,7 @@ export default function Library() {
             <div className="container">
                 <div className="topbar">
                     <Menu className="hamburger-icon" onClick={toggleDropdown} style={{ color: '#aeaeae' }} size={32} />
-                    <h1 style={{ color: '#aeaeae' }}>Library</h1>
+                    <h1 style={{ color: '#aeaeae', cursor: "default" }}>Library</h1>
                 </div>
                 {isDropdownOpen && (
                     <div className="dropdown-menu">
