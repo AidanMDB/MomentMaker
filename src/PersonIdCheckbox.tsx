@@ -14,7 +14,7 @@ interface PersonIdCheckboxProps {
 
 const PersonIdCheckbox: React.FC<PersonIdCheckboxProps> = ({ options, selectedValues, onSelect }) => {
   const toggleSelection = (value: string) => {
-    let updatedSelection = selectedValues.includes(value)
+    const updatedSelection = selectedValues.includes(value)
       ? selectedValues.filter((v) => v !== value)
       : [...selectedValues, value];
 
