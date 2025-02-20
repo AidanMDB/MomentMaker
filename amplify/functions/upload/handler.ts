@@ -9,15 +9,27 @@ const rekogClient = new RekognitionClient();
 const s3Client = new S3Client();
 
 
-async function cropImageToFace() {
+async function cropImageToFace(Left: number, Top: number, Width: number, Height: number) {
     const object = await s3Client.send(new GetObjectCommand({ 
         Bucket: "", 
         Key: "" 
     }));
 
     const imageBuffer = await object.Body?.transformToByteArray();
+    const image = await sharp(imageBuffer).metadata();
+    const imageWidth = image.width;
+    const imageHeight = image.height
+
+    if (!imageWidth || !imageHeight) {
+        console.log("Could not get image dimensions");
+        return;
+    }
+
     const cropParams = {
-        left: Math.round(Left * imageWidth)
+        left: Math.round(Left * imageWidth),
+        top: Math.round(Top * imageHeight),
+        width: Math.round(Width * imageWidth),
+        height: Math.round(Height * imageHeight),
     }
 
 }
