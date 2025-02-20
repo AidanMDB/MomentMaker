@@ -5,7 +5,7 @@ import { defineBackend } from '@aws-amplify/backend';
 import { storage } from './storage/resource';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
-import { aws_rekognition } from 'aws-cdk-lib';
+
 
 const backend = defineBackend({
   auth,
@@ -15,11 +15,11 @@ const backend = defineBackend({
   myVidMakerFunction,
 });
 
-
 backend.auth.resources.unauthenticatedUserIamRole.addToPrincipalPolicy(
   new PolicyStatement({
     actions: [
       "rekognition:DetectFaces",
+      "rekognition:SearchFacesByImage"
     ],
     resources: ['*']
   })
@@ -28,16 +28,14 @@ backend.auth.resources.unauthenticatedUserIamRole.addToPrincipalPolicy(
 backend.addOutput({
   custom:{
     Predictions: {
-      convert: {
-        Identify: {
-          IdentifyEntities: {
-            collectionId: "default",
-            maxEntities: 10,
-          },
-          celebrityDetectionEnabled: false,
-          proxy: false,
-          region: backend.auth.stack.region
-        }
+      Identify: {
+        IdentifyEntities: {
+          collectionId: "default",
+          maxEntities: 10,
+        },
+        celebrityDetectionEnabled: false,
+        proxy: false,
+        region: backend.auth.stack.region
       }
     }
   }

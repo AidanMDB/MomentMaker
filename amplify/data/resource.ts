@@ -10,7 +10,7 @@ const schema = a.schema({
   UserFaces: a.model({
     userID: a.id().required(),
     faceID: a.string().required(),
-    photoLocations: a.string().array().required(),
+    photoLocation: a.string().required(),
     embedding: a.float().required()
   })
   .identifier(["userID", "faceID"])

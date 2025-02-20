@@ -12,9 +12,11 @@
   "dependencies": {
     "@aws-amplify/predictions": "^6.1.43",
     "@aws-amplify/ui-react": "^6.5.5",
+    "@aws-sdk/client-rekognition": "^3.744.0",
     "aws-amplify": "^6.12.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "sharp": "^0.33.5"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.5.0",
