@@ -1,10 +1,12 @@
 import { useState } from "react";
 import "./CreateMoment.css"
+import PreviewMoment from './PreviewMoment'
 import { Menu } from "lucide-react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 export default function Library() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isPreviewOpen, setPreviewOpen] = useState(false);
 
     const toggleDropdown = () => {
         setIsDropdownOpen((prev) => !prev);
@@ -14,6 +16,17 @@ export default function Library() {
         alert(`You selected: ${option}`);
         setIsDropdownOpen(false);
     };
+
+    const openPreview = () => setPreviewOpen(true);
+    const closePreview = () => setPreviewOpen(false);
+
+    const handleRedo = () => {
+        alert("Redo button clicked!");
+      };
+    
+      const handleSave = () => {
+        alert("Save button clicked!");
+      };
 
     return (
         <main>
@@ -46,7 +59,8 @@ export default function Library() {
                         </div> 
                     </div>
                 </div>
-                <button className="submit_button"> Submit </button>
+                <button className="submit_button"  onClick={openPreview}> Submit </button>
+                <PreviewMoment isOpen={isPreviewOpen} onClose={closePreview} onRedo={handleRedo} onSave={handleSave} />
             </div>
         </main>
     );
