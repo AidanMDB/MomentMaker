@@ -1,12 +1,9 @@
 :root {
-    --dark-green: #43B2AE;
-    --light-green: #AFD9AE;
-    --dark-orange: #F88379;
-    --light-orange: #FBCEB1;
-    --shadow-dgreen: #2e7875;
-    --shadow-lgreen: #9ecc9e;
-    --shadow-dorange: #cf665c;
-    --dark-gray: #333332;
+    --dark-blue: #263952;
+    --light-blue: #365071;
+    --dark-purple: #4c3654;
+    --light-purple: #6d4a7a;
+    --light-gray: #aeaeae;
     --font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
@@ -20,13 +17,15 @@ html, body {
 
 body {
     margin: 0;
-    background: var(--dark-green);
     display: flex;
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     height: 100vh;
     width: 100vw;
     justify-content: center;
     align-items: center;
+    overflow-y: auto;
+    scrollbar-width: none;
+    background-color: var(--light-blue);
 }
 
 main {
@@ -41,43 +40,44 @@ main {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    background: var(--light-blue);
   }
 
-.topbar {
+div.topbar {
     display: flex;
     align-items: center;
     justify-content: left;
-    background: var(--light-green);
     height: 60px;
+    background: var(--dark-blue);
 }
 
 .hamburger-icon {
     font-size: 32px;
-    color: var(--shadow-dgreen);
     cursor: pointer;
     margin-left: 10px;
     margin-right: 10px;
 }
 
-.dropdown-menu {
+div.dropdown-menu {
     position: absolute;
     top: 60px;
     left: 0;
-    color: var(--shadow-dgreen);
-    background-color: var(--shadow-lgreen);
+    color: var(--light-gray);
+    background-color: var(--dark-blue);
     z-index: 1;
     min-width: 160px;
     border-radius: 4px;
 }
 
-.dropdown-item {
+div.dropdown-item {
     padding: 12px 16px;
     cursor: pointer;
     font-size: 20px;
 }
 
-.dropdown-item:hover {
-    background-color: var(--light-green);
+div.dropdown-item:hover {
+    background-color: var(--light-blue);
+    border-radius: 4px;
 }
 
 .bottom_container {
@@ -88,19 +88,19 @@ main {
   }
 
 .identification_block {
-    background: var(--dark-orange);
+    background: var(--light-purple);
     display: flex;
     align-items: center;
-    height: 100%;
+    height: auto;
     margin: 30px 30px 15px 30px;
     border-radius: 4px;
 }
 
 .features_block {
-    background: var(--dark-orange);
+    background: var(--light-purple);
     display: flex;
     align-items: center;
-    height: 100%;
+    height: 245px;
     margin: 15px 30px 30px 30px;
     border-radius: 4px;
 }
@@ -109,21 +109,51 @@ main {
     display: flex;
     align-items: center;
     padding: 0 15px;
-    background: var(--light-orange);
+    background: var(--dark-purple);
     height: 50px;
     border-radius: 4px 4px 0px 0px;
 }
 
 .submit_button {
-    background-color: var(--dark-orange);
-    color: var(--light-orange);
-    font-size: 16px;
+    background-color: var(--light-purple);
+    color: var(--light-gray);
+    font-size: 20px;
     padding: 10px 20px;
     margin: 0px 30px 30px 30px;
-    border: var(--light-orange);
+    border: var(--dark-purple);
     border-radius: 4px;
     cursor: pointer;
     transition: background 0.3s;
     margin-left: auto;
-    width: 150px;
+    width: 170px;
+}
+
+.feature_name {
+    color: var(--light-gray);
+    font-size: 18px;
+    margin: 15px 0px 5px 15px;
+    cursor: default;
+}
+
+.feature_dropbox {
+    background-color: var(--dark-purple);
+    outline: 1px solid var(--light-gray);
+    color: var(--light-gray);
+    font-size: 18px;
+    padding: 10px;
+    height: auto;
+    margin: 0px 15px;
+    cursor: pointer;
+}
+
+.feature_dropbox:focus {
+    outline: 1px solid var(--light-gray);
+    color: var(--light-gray);
+    background: var(--dark-purple);
+}
+
+.feature_dropbox:hover {
+    border: 1px solid var(--dark-purple);
+    color: var(--light-gray);
+    cursor: pointer;
 }
