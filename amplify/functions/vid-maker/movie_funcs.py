@@ -1,4 +1,5 @@
 from moviepy.editor import VideoFileClip, ImageClip, concatenate_videoclips
+import sys
 
 """
     Merges a list of images and videos into a single video file.
@@ -65,3 +66,15 @@ def parse_video(input_path, output_path, start_time, end_time):
     clip = clip.subclip(start_time, end_time)  # Trim first 5 seconds
     clip.write_videofile(output_path, codec="libx264")
     return output_path
+
+def handle_files(file_list):
+    for file in file_list:
+        print(f"Processing file: {file}")
+
+if __name__ == "__main__":
+    # sys.argv will contain the script name as the first element, so we slice [1:]
+    files = sys.argv[1:]
+    final_vid = ''
+    merge_media(files, final_vid)
+    print(final_vid)
+
