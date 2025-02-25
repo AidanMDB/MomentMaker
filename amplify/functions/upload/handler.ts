@@ -1,5 +1,5 @@
 import { RekognitionClient, DetectFacesCommand, CompareFacesCommand} from "@aws-sdk/client-rekognition";
-import { S3Client, HeadObjectCommand, GetObjectCommand, PutObject } from "@aws-sdk/client-s3";
+import { S3Client, HeadObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { S3 } from "aws-cdk-lib/aws-ses-actions";
 //import { Predictions } from "@aws-amplify/predictions";
 import { S3Handler } from "aws-lambda";
@@ -8,7 +8,14 @@ import sharp from "sharp";
 const rekogClient = new RekognitionClient();
 const s3Client = new S3Client();
 
-
+/**
+ * Crops image to detected to be stored for comparison purposes
+ * @param Left 
+ * @param Top 
+ * @param Width 
+ * @param Height 
+ * @returns 
+ */
 async function cropImageToFace(Left: number, Top: number, Width: number, Height: number) {
     const object = await s3Client.send(new GetObjectCommand({ 
         Bucket: "", 
@@ -32,6 +39,18 @@ async function cropImageToFace(Left: number, Top: number, Width: number, Height:
         height: Math.round(Height * imageHeight),
     }
 
+
+    const croppedImage = await sharp(imageBuffer)
+        .extract(cropParams)
+        .toBuffer();
+
+    const newKey = 'faces/new_face'
+    await s3Client.send(new PutObjectCommand({
+        Bucket: "",
+        Key: newKey,
+        Body: croppedImage,
+        ContentType: "image/jpeg"
+    }));
 }
 
 
@@ -40,12 +59,12 @@ async function cropImageToFace(Left: number, Top: number, Width: number, Height:
 /**
  * Detects faces in a given image
  */
-async function analyzeImage() {
+async function analyzeImage(s3Path: string) {
     const input = {
         Image: {
             S3Object: {
                 Bucket: "momentmaker",
-                Name: "image.jpg"
+                Name: s3Path
             }
         }
     }
@@ -67,7 +86,7 @@ async function analyzeImage() {
     for (const face of response.FaceDetails) {
         if (face.BoundingBox) {
             const {Height, Left, Top, Width} = face.BoundingBox;
-
+            cropImageToFace(Left, Top, Width, Height);
         }
     }
 }
@@ -78,13 +97,6 @@ async function analyzeImage() {
 
 
 export const handler: S3Handler = async (event) => {
-
-    const input = {
-        CollectionId:"MomentMaker",     // make this an environment variable
-        UserId: "user1",                // replace with user id from auth or storage metadata
-    }
-    const command = new CreateUserCommand(input);
-    const response = await rekogClient.send(command);
 
     // S3 performs batch operations (so might have multiple keys uploaded at once) thats why multiple keys
     const objectKeys = event.Records.map((record) => record.s3.object.key);
@@ -97,17 +109,14 @@ export const handler: S3Handler = async (event) => {
             Bucket: bucketName,
             Key: objectKey
         });
+
         const metadataResponse = await s3Client.send(heafObjectCommand);
         const metadata = metadataResponse.Metadata;
         if (!metadata || !metadata.fileType || !metadata.userId) {
             continue;
         }
-        if (!userExistsInCollection(metadata.userId)) {
-            addUserToCollection(metadata.userId);
-        }
+        analyzeImage(objectKey);
 
-        addFacetoCollection(objectKey, bucketName);
-        associateFacetoUser();
     }
 
 
