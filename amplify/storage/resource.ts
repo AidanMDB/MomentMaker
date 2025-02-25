@@ -1,4 +1,4 @@
-import { defineStorage } from '@aws-amplify/backend';
+import { defineFunction, defineStorage } from '@aws-amplify/backend';
 
 export const storage = defineStorage({
     name: 'MediaStorage',
@@ -7,5 +7,10 @@ export const storage = defineStorage({
             allow.entity('identity').to(['read', 'write', 'delete'])
         ],
     }),
-
+    triggers: {
+        onUpload: defineFunction({
+            entry: 'functions/upload/handler.ts',
+            resourceGroupName: 'storage',
+        })
+    }
 });
