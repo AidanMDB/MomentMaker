@@ -62,11 +62,28 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             }
         }));
 
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ files }),
-        };
+        const file_data_array = files.map((file) => file.data);
+        return new Promise((resolve, reject) => {
+            const validFileDataArray = file_data_array.filter((data): data is string => data !== undefined);
+            const pythonProcess = spawn('python', ['movie_funcs.py', ...validFileDataArray]);
+    
+            let result = '';
+            pythonProcess.stdout.on('data', (data) => {
+                result += data.toString();
+            });
+    
+            pythonProcess.stderr.on('data', (data) => {
+                console.error(`Error: ${data}`);
+            });
+    
+            pythonProcess.on('close', (code) => {
+                if (code === 0) {
+                    resolve({ statusCode: 200, body: result });
+                } else {
+                    reject({ statusCode: 500, body: `Python script exited with code ${code}` });
+                }
+            });
+        });
     } catch (error) {
         console.error("Error processing files:", error);
         return {
@@ -75,26 +92,3 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         };
     }
 };
-
-
-//     return new Promise((resolve, reject) => {
-//         const pythonProcess = spawn('python3', ['movie_funcs.py', event.operation, JSON.stringify(event)]);
-
-//         let result = '';
-//         pythonProcess.stdout.on('data', (data) => {
-//             result += data.toString();
-//         });
-
-//         pythonProcess.stderr.on('data', (data) => {
-//             console.error(`Error: ${data}`);
-//         });
-
-//         pythonProcess.on('close', (code) => {
-//             if (code === 0) {
-//                 resolve({ statusCode: 200, body: result });
-//             } else {
-//                 reject({ statusCode: 500, body: `Python script exited with code ${code}` });
-//             }
-//         });
-//     });
-// };
