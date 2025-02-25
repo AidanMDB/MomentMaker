@@ -97,7 +97,7 @@ async function analyzeImage(s3Path: string) {
 
 
 export const handler: S3Handler = async (event) => {
-
+    console.log("called function");
     // S3 performs batch operations (so might have multiple keys uploaded at once) thats why multiple keys
     const objectKeys = event.Records.map((record) => record.s3.object.key);
     const bucketName = event.Records[0].s3.bucket.name;
@@ -109,6 +109,7 @@ export const handler: S3Handler = async (event) => {
             Bucket: bucketName,
             Key: objectKey
         });
+        console.log(`Analyzing image: ${objectKey}`);
 
         const metadataResponse = await s3Client.send(heafObjectCommand);
         const metadata = metadataResponse.Metadata;
