@@ -1,7 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Library from "./Library.tsx";
+import CreateAMoment from "./CreateMoment.tsx";
 import { Amplify } from "aws-amplify";
 import outputs from "../amplify_outputs.json";
 
@@ -13,6 +14,12 @@ Amplify.configure({
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigate to="/library" />} />
+        <Route path="/library" element={<Library />} />
+        <Route path="/createamoment" element={<CreateAMoment />} />
+      </Routes>
+    </Router>
   </React.StrictMode>
 );
