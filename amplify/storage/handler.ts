@@ -7,7 +7,43 @@ import sharp from "sharp";
 
 const rekogClient = new RekognitionClient();
 const s3Client = new S3Client();
-/* 
+
+
+
+async function compareFaces(croppedImage: Buffer, targetImage: Buffer) {
+    const input = {
+        SourceImage: {
+            Bytes: croppedImage
+        },
+        TargetImage: {
+            Bytes: targetImage
+        }
+    }
+
+    const command = new CompareFacesCommand(input);
+    let response;
+    try {
+        response = await rekogClient.send(command);
+        console.log(response.$metadata);
+    } catch (error) {
+        console.error(error);
+        return error;
+    }
+
+    if (!response.FaceMatches) {
+        console.log("No faces detected");
+        return;
+    }
+
+    for (const match of response.FaceMatches) {
+        console.log(`Similarity: ${match.Similarity}`);
+    }
+
+}
+
+
+
+
 /**
  * Crops image to detected to be stored for comparison purposes
  * @param Left 
@@ -15,8 +51,8 @@ const s3Client = new S3Client();
  * @param Width 
  * @param Height 
  * @returns 
-
-async function cropImageToFace(Left: number, Top: number, Width: number, Height: number) {
+ */
+async function cropImageToFace(Left: number, Top: number, Width: number, Height: number, FaceNum: number) {
     const object = await s3Client.send(new GetObjectCommand({ 
         Bucket: "", 
         Key: "" 
@@ -44,13 +80,13 @@ async function cropImageToFace(Left: number, Top: number, Width: number, Height:
         .extract(cropParams)
         .toBuffer();
 
-    const newKey = 'faces/new_face'
+/*     const newKey = 'faces/new_face'
     await s3Client.send(new PutObjectCommand({
         Bucket: "",
         Key: newKey,
         Body: croppedImage,
         ContentType: "image/jpeg"
-    }));
+    })); */
 }
 
 
@@ -58,7 +94,7 @@ async function cropImageToFace(Left: number, Top: number, Width: number, Height:
 
 /**
  * Detects faces in a given image
- 
+ */
 async function analyzeImage(s3Path: string) {
     const input = {
         Image: {
@@ -83,13 +119,20 @@ async function analyzeImage(s3Path: string) {
         return;
     }
 
+
+    let faceCounter = 0;
     for (const face of response.FaceDetails) {
-        if (face.BoundingBox) {
+
+        if (face.BoundingBox && face.Quality && face.Quality.Sharpness !== undefined && face.Quality.Sharpness > 70) {
             const {Height, Left, Top, Width} = face.BoundingBox;
-            cropImageToFace(Left, Top, Width, Height);
+
+            if (Height !== undefined && Left !== undefined && Top !== undefined && Width !== undefined) {
+                faceCounter++;
+                cropImageToFace(Left, Top, Width, Height, faceCounter);
+            }
         }
     }
-} */
+}
 
 
 
@@ -116,11 +159,7 @@ export const handler: S3Handler = async (event) => {
         if (!metadata || !metadata.fileType || !metadata.userId) {
             continue;
         }
-        //analyzeImage(objectKey);
+        analyzeImage(objectKey);
 
     }
-
-
-
-
 };

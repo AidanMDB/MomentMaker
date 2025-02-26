@@ -4,13 +4,14 @@ export const storage = defineStorage({
     name: 'MediaStorage',
     access: (allow) => ({
         'user-media/*': [
-            allow.entity('identity').to(['read', 'write', 'delete'])
+            allow.guest.to(['read', 'write', 'delete'])
         ],
     }),
     triggers: {
         onUpload: defineFunction({
-            entry: 'functions/upload/handler.ts',
-            resourceGroupName: 'storage',
+            name: 'triggerOnMediaUpload',
+            timeoutSeconds: 30,
+            entry: './handler.ts',
         })
     }
 });
