@@ -12,6 +12,7 @@ export const storage = defineStorage({
             name: 'triggerOnMediaUpload',
             timeoutSeconds: 30,
             entry: './handler.ts',
+            layers: {"sharp": "arn:aws:lambda:us-east-1:195275659712:layer:mySharpLinuxLayer:1"}
         })
     }
 });

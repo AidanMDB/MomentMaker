@@ -9,7 +9,6 @@ const rekogClient = new RekognitionClient();
 const s3Client = new S3Client();
 
 
-
 async function compareFaces(croppedImage: Buffer, targetImage: Buffer) {
     const input = {
         SourceImage: {
@@ -152,6 +151,11 @@ export const handler: S3Handler = async (event) => {
             Bucket: bucketName,
             Key: objectKey
         });
+        if (objectKey.startsWith("faces/")) {
+            console.log("Skipped image analysis for face image");
+            continue;
+        }
+        
         console.log(`Analyzing image: ${objectKey}`);
 
         const metadataResponse = await s3Client.send(heafObjectCommand);
