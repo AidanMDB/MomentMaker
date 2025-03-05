@@ -1,4 +1,5 @@
 import './PreviewMoment.css';
+import "./AllStyles.css"
 import demo_video from "/RPReplay_Final1741140628.mp4"
 
 interface ModalProps {

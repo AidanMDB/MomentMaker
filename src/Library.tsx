@@ -1,16 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Menu } from "lucide-react";
 import { uploadData, list, getUrl } from 'aws-amplify/storage';
-import { useNavigate } from "react-router-dom";
+import "./AllStyles.css"
 import "./Library.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 import demo_video from "/RPReplay_Final1741140628.mp4";
 
 export default function Library() {
-    const navigate = useNavigate();
-    
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState("Photos");
     const [photos, setPhotos] = useState<URL[]>([]);
@@ -18,11 +14,6 @@ export default function Library() {
     const [songs, setSongs] = useState<URL[]>([]);
 
     const moments = [ demo_video ];
-
-
-    const toggleDropdown = () => {
-        setIsDropdownOpen((prev) => !prev);
-    };
     
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
@@ -110,22 +101,6 @@ export default function Library() {
 
     //HTML
     return (
-        <main>
-            <div className="container">
-                <div className="topbar">
-                    <Menu className="hamburger-icon" onClick={toggleDropdown} style={{ color: '#aeaeae' }} size={32} />
-                    <h1 style={{ color: '#aeaeae', cursor: "default" }}>Library</h1>
-                </div>
-                {isDropdownOpen && (
-                    <div className="dropdown-menu">
-                        <div className="dropdown-item" onClick={() => navigate("/library")}>
-                            Library
-                        </div>
-                        <div className="dropdown-item" onClick={() => navigate("/createamoment")}>
-                            Create A Moment
-                        </div>
-                    </div>
-                )}
                 <div className="media_block">
                     <div className="media_container">
                         <div className="topbar_media">
@@ -147,7 +122,7 @@ export default function Library() {
                             </button>
                         </div> 
                         <div className="media_grid">
-                            {activeTab === "Photos" && (
+                        {activeTab === "Photos" && (
                                 photos.map((src, index) => (
                                     <img key={index} src={src.toString()} className="media_item" />
                                 ))
@@ -176,7 +151,5 @@ export default function Library() {
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
     );
 }

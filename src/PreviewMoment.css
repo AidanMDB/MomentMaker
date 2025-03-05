@@ -1,12 +1,3 @@
-:root {
-    --dark-blue: #263952;
-    --light-blue: #365071;
-    --dark-purple: #4c3654;
-    --light-purple: #6d4a7a;
-    --light-gray: #aeaeae;
-    --font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-}
-
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -20,7 +11,7 @@
   }
   
   .modal-content {
-    background: var(--light-blue);
+    background: var(--light-gray);
     padding: 20px;
     border-radius: 5px;
     position: relative;
@@ -40,13 +31,13 @@
     background: none;
     font-size: 25px;
     cursor: pointer;
-    color: var(--light-gray);
+    color: var(--light-purple);
   }
 
   .title {
     margin-bottom: 0px;
     font-size: 30px;
-    color: var(--light-gray);
+    color: var(--light-purple);
     cursor: default;
   }
   
@@ -71,16 +62,20 @@
 }
 
 .save_button, .redo_button {
-    background-color: var(--dark-blue);
-    color: var(--light-gray);
+    background-color: var(--light-purple);
+    color: black;
     font-size: 18px;
     padding: 10px 20px;
     margin: 0 15px;
-    border: var(--dark-blue);
+    border: var(--dark-gray);
     border-radius: 4px;
     cursor: pointer;
     transition: background 0.3s;
     width: 150px;
+}
+
+.save_button:hover, .redo_button:hover {
+  background-color: var(--dark-purple);
 }
 
   

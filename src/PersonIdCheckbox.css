@@ -1,12 +1,3 @@
-:root {
-    --dark-blue: #263952;
-    --light-blue: #365071;
-    --dark-purple: #4c3654;
-    --light-purple: #6d4a7a;
-    --light-gray: #aeaeae;
-    --font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-}
-
 .person-checkbox-container {
     padding: 15px;
     width: auto;
@@ -47,7 +38,7 @@
   .person-name {
     margin-top: 5px;
     font-size: 20px;
-    color: var(--light-gray);
+    color: var(--light-purple);
   }
   
   .person-option input[type="checkbox"]:checked + .person-image,
