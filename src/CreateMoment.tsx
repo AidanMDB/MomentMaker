@@ -7,11 +7,11 @@ import PersonIdCheckbox from "./PersonIdCheckbox.tsx";
 import "./CreateMoment.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-import face1 from "./media/women-linkedin-headshot-los-angeles-1.jpg";
-import face2 from "./media/Mike Tyson Photographed by Los Angeles Photographer Alan Weissman.jpg";
-import face3 from "./media/head-shot-photography-studio-new-york.jpg";
-import face4 from "./media/istockphoto-1320651997-612x612.jpg";
-import face5 from "./media/images.jpg";
+import face1 from "/women-linkedin-headshot-los-angeles-1.jpg";
+import face2 from "/Mike Tyson Photographed by Los Angeles Photographer Alan Weissman.jpg";
+import face3 from "/head-shot-photography-studio-new-york.jpg";
+import face4 from "/istockphoto-1320651997-612x612.jpg";
+import face5 from "/images.jpg";
 
 export default function Library() {
     const navigate = useNavigate();

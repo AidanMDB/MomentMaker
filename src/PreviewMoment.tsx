@@ -1,5 +1,5 @@
 import './PreviewMoment.css';
-import demo_video from "./media/RPReplay_Final1741140628 (1).mp4"
+import demo_video from "/RPReplay_Final1741140628.mp4"
 
 interface ModalProps {
   isOpen: boolean;
