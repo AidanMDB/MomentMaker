@@ -1,37 +1,31 @@
-import { useState, useRef } from "react";
-import { Menu } from "lucide-react";
-import { uploadData } from 'aws-amplify/storage';
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { uploadData, list, getUrl } from 'aws-amplify/storage';
+import "./AllStyles.css"
 import "./Library.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-import test_photo from "./Bunny.png";
-import test_photo2 from "./Ears.jpg";
-import test_video from "./TestVideo.mp4";
-import song from "./alone-296348.mp3";
+import demo_video from "/RPReplay_Final1741140628.mp4";
 
 export default function Library() {
-    const navigate = useNavigate();
-    
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState("Photos");
+    const [photos, setPhotos] = useState<URL[]>([]);
+    const [videos, setVideos] = useState<URL[]>([]);
+    const [songs, setSongs] = useState<URL[]>([]);
 
-    const photos = [ test_photo,test_photo,test_photo,test_photo,test_photo,test_photo,test_photo,test_photo ];
-    const videos = [ test_video,test_video,test_video,test_video,test_video ]
-    const songs = [ song,song,song,song,song ]
-    const moments = [ test_photo2,test_photo2,test_photo2,test_photo2,test_photo2 ];
-
-    const toggleDropdown = () => {
-        setIsDropdownOpen((prev) => !prev);
-    };
+    const moments = [ demo_video ];
     
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
     }
     
+    //Upon Loading
+    useEffect(() => {
+        fetchMedia();
+    }, []);
+
     //Upload
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "video/mp4", "audio/mp3"];
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "video/mp4", "audio/mp3", "audio/mpeg"];
 
     const handleUploadClick = () => {
         if (fileInputRef.current) {
@@ -44,13 +38,15 @@ export default function Library() {
             const file = event.target.files[0];
 
             if (!allowedTypes.includes(file.type)) {
-                alert("Invalid file type. Please select a JPEG, PNG, or MP4 file.");
+                alert("Invalid file type. Please select a JPEG, PNG, MP4, or MP3 file.");
                 return;
             }
 
+            const type = (file.type).split('/')[0];
+
             try {
-                const result = await uploadData({
-                    path: `user-media/${file.name}`,
+                await uploadData({
+                    path: `user-media/${type}/${file.name}`,
                     data: file,
                     options: {
                         bucket: 'MediaStorage',
@@ -61,33 +57,50 @@ export default function Library() {
                     }
                 });
 
-                console.log("Upload successful:", result);
                 alert("Upload successful!");
             } catch (error) {
-                console.error("Upload failed:", error);
                 alert("Upload failed!");
             }
+            
+            fetchMedia();
         }
     };
 
+    const fetchMedia = async () => {
+        try {
+            const { items: photoResults } = await list({ path: "user-media/image/" });
+            const { items: videoResults } = await list({ path: "user-media/video/" });
+            const { items: songResults } = await list({ path: "user-media/audio/" });
+
+            const photoUrls = await Promise.all(
+                photoResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    return urlOutput.url;
+                })
+            );
+            const videoUrls = await Promise.all(
+                videoResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    return urlOutput.url;
+                })
+            );
+            const songUrls = await Promise.all(
+                songResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    return urlOutput.url;
+                })
+            );
+
+            setPhotos(photoUrls);
+            setVideos(videoUrls);
+            setSongs(songUrls);
+        } catch (error) {
+            console.error("Error fetching media:", error);
+        }
+      };
+
     //HTML
     return (
-        <main>
-            <div className="container">
-                <div className="topbar">
-                    <Menu className="hamburger-icon" onClick={toggleDropdown} style={{ color: '#aeaeae' }} size={32} />
-                    <h1 style={{ color: '#aeaeae', cursor: "default" }}>Library</h1>
-                </div>
-                {isDropdownOpen && (
-                    <div className="dropdown-menu">
-                        <div className="dropdown-item" onClick={() => navigate("/library")}>
-                            Library
-                        </div>
-                        <div className="dropdown-item" onClick={() => navigate("/createamoment")}>
-                            Create A Moment
-                        </div>
-                    </div>
-                )}
                 <div className="media_block">
                     <div className="media_container">
                         <div className="topbar_media">
@@ -109,34 +122,34 @@ export default function Library() {
                             </button>
                         </div> 
                         <div className="media_grid">
-                            {activeTab === "Photos" && (
+                        {activeTab === "Photos" && (
                                 photos.map((src, index) => (
-                                    <img key={index} src={src} className="media_item" />
+                                    <img key={index} src={src.toString()} className="media_item" />
                                 ))
                             )}
                             {activeTab === "Videos" && (
                                 videos.map((src, index) => (
                                     <video key={index} className="media_item" controls>
-                                        <source src={src} type="video/mp4" />
+                                        <source src={src.toString()} type="video/mp4" />
                                     </video>
                                 ))
                             )}
                             {activeTab === "Songs" && (
                                 songs.map((src, index) => (
                                     <audio key={index} className="media_item_audio" controls>
-                                        <source src={src} type="audio/mp3" />
+                                        <source src={src.toString()} type="audio/mp3" />
                                     </audio>
                                 ))
                             )}
                             {activeTab === "Moments" && (
                                 moments.map((src, index) => (
-                                    <img key={index} src={src} className="media_item" />
+                                    <video key={index} className="media_item" controls>
+                                        <source src={src.toString()} type="video/mp4" />
+                                    </video>
                                 ))
                             )}
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
     );
 }
