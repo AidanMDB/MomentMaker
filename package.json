@@ -11,11 +11,10 @@
     "test": "jest --coverage --coverageDirectory=/dev/null --passWithNoTests"
   },
   "dependencies": {
-    "@aws-amplify/storage": "^6.7.11",
     "@aws-amplify/ui-react": "^6.5.5",
     "@aws-amplify/ui-react-storage": "^3.7.2",
     "@fortawesome/fontawesome-free": "^6.7.2",
-    "aws-amplify": "^6.13.1",
+    "aws-amplify": "^6.12.3",
     "lucide-react": "^0.475.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
