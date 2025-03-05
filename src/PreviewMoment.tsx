@@ -1,4 +1,5 @@
 import './PreviewMoment.css';
+import "./AllStyles.css"
 import test_video from "./test_moment.mp4";
 
 interface ModalProps {
