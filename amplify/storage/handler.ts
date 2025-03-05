@@ -247,6 +247,11 @@ export const handler: S3Handler = async (event) => {
     for (const objectKey of objectKeys) {
 
         console.log(`Analyzing image: ${objectKey}`);
+
+        if (objectKey.startsWith("faces/") || objectKey.startsWith("songs/")) {
+            console.log("Skipped image analysis for face image");
+            continue;
+        }
         
         let metadata;
         try {
@@ -258,15 +263,14 @@ export const handler: S3Handler = async (event) => {
             metadata = metadataResponse.Metadata;
         }
         catch (error) {
-            console.error(`Error retrieving metadata: ${error}`);
+            console.error(error);
             throw error;
         }
         
-        console.log(metadata);
-        //if (!metadata || !metadata.fileType || !metadata.userId) {
-        //    console.log("No metadata found");
-        //}
-        //await analyzeImage(objectKey);
+        if (!metadata || !metadata.fileType || !metadata.userId) {
+            continue;
+        }
+        await analyzeImage(objectKey);
 
     }
 };
