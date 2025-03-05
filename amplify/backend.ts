@@ -23,7 +23,7 @@ backend.storage.resources.bucket.addEventNotification(
   EventType.OBJECT_CREATED,
   new LambdaDestination(mediaUpload),
   {
-    prefix: 'user-media',
+    prefix: 'user-media/image/',
   }
 )
 

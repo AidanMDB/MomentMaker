@@ -243,19 +243,20 @@ export const handler: S3Handler = async (event) => {
     // S3 performs batch operations (so might have multiple keys uploaded at once) thats why multiple keys
     const objectKeys = event.Records.map((record) => record.s3.object.key);
     const bucketName = event.Records[0].s3.bucket.name;
-
+    
     for (const objectKey of objectKeys) {
-
-        console.log(`Analyzing image: ${objectKey}`);
+        
+        console.log(`${objectKey} in ${bucketName}`);
         
         let metadata;
         try {
             const headObjectCommand = new HeadObjectCommand({
-                Bucket: bucketName,
-                Key: objectKey
+                Bucket: `${bucketName}`,
+                Key: `${objectKey}`
             });
             const metadataResponse = await s3Client.send(headObjectCommand);
             metadata = metadataResponse.Metadata;
+            //console.log(`MetadataResponse:\n${metadataResponse}`);
         }
         catch (error) {
             console.error(`Error retrieving metadata: ${error}`);
