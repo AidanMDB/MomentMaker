@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import "./Home.css"
+import "./AllStyles.css"
 import logo from "./assets/MomentMaker.png"
 
 export default function Home() {
@@ -8,7 +9,7 @@ export default function Home() {
     return (
         <main>
             <div className="topbar_home">
-                <button className="login" onClick={() => navigate("/library")}>Log In</button>
+                <button className="login" onClick={() => navigate("/all")}>Log In</button>
             </div>
             <div className="logo">
             <img src={logo} alt="Centered" className="image" />
