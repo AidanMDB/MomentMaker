@@ -101,55 +101,53 @@ export default function Library() {
 
     //HTML
     return (
-                <div className="media_block">
-                    <div className="media_container">
-                        <div className="topbar_media">
-                            <span className={`media_clickable_word ${activeTab === 'Photos' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Photos')}> Photos </span>
-                            <span className="media_bar"> | </span>
-                            <span className={`media_clickable_word ${activeTab === 'Videos' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Videos')}> Videos </span>
-                            <span className="media_bar"> | </span>
-                            <span className={`media_clickable_word ${activeTab === 'Songs' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Songs')}> Songs </span>
-                            <span className="media_bar"> | </span>
-                            <span className={`media_clickable_word ${activeTab === 'Moments' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Moments')}> Moments </span>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                style={{ display: "none" }}
-                                onChange={handleFileChange}
-                            />
-                            <button className="upload_button" onClick={handleUploadClick}>
-                                <i className="fas fa-upload"></i>
-                            </button>
-                        </div> 
-                        <div className="media_grid">
-                        {activeTab === "Photos" && (
-                                photos.map((src, index) => (
-                                    <img key={index} src={src.toString()} className="media_item" />
-                                ))
-                            )}
-                            {activeTab === "Videos" && (
-                                videos.map((src, index) => (
-                                    <video key={index} className="media_item" controls>
-                                        <source src={src.toString()} type="video/mp4" />
-                                    </video>
-                                ))
-                            )}
-                            {activeTab === "Songs" && (
-                                songs.map((src, index) => (
-                                    <audio key={index} className="media_item_audio" controls>
-                                        <source src={src.toString()} type="audio/mp3" />
-                                    </audio>
-                                ))
-                            )}
-                            {activeTab === "Moments" && (
-                                moments.map((src, index) => (
-                                    <video key={index} className="media_item" controls>
-                                        <source src={src.toString()} type="video/mp4" />
-                                    </video>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </div>
+        <div className="media_container">
+            <div className="topbar_media">
+                <span className={`media_clickable_word ${activeTab === 'Photos' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Photos')}> Photos </span>
+                <span className="media_bar"> | </span>
+                <span className={`media_clickable_word ${activeTab === 'Videos' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Videos')}> Videos </span>
+                <span className="media_bar"> | </span>
+                <span className={`media_clickable_word ${activeTab === 'Songs' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Songs')}> Songs </span>
+                <span className="media_bar"> | </span>
+                <span className={`media_clickable_word ${activeTab === 'Moments' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Moments')}> Moments </span>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                    onChange={handleFileChange}
+                />
+                <button className="upload_button" onClick={handleUploadClick}>
+                    <i className="fas fa-upload"></i>
+                </button>
+            </div> 
+            <div className="media_grid">
+            {activeTab === "Photos" && (
+                    photos.map((src, index) => (
+                        <img key={index} src={src.toString()} className="media_item" />
+                    ))
+                )}
+                {activeTab === "Videos" && (
+                    videos.map((src, index) => (
+                        <video key={index} className="media_item" controls>
+                            <source src={src.toString()} type="video/mp4" />
+                        </video>
+                    ))
+                )}
+                {activeTab === "Songs" && (
+                    songs.map((src, index) => (
+                        <audio key={index} className="media_item_audio" controls>
+                            <source src={src.toString()} type="audio/mp3" />
+                        </audio>
+                    ))
+                )}
+                {activeTab === "Moments" && (
+                    moments.map((src, index) => (
+                        <video key={index} className="media_item" controls>
+                            <source src={src.toString()} type="video/mp4" />
+                        </video>
+                    ))
+                )}
+            </div>
+        </div>
     );
 }
