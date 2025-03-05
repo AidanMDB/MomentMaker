@@ -1,6 +1,6 @@
 import './PreviewMoment.css';
 import "./AllStyles.css"
-import test_video from "./test_moment.mp4";
+import demo_video from "/RPReplay_Final1741140628.mp4"
 
 interface ModalProps {
   isOpen: boolean;
@@ -30,7 +30,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
             </button>
             <h2 className="title">Preview Moment</h2>
             <video controls>
-                <source src={test_video} type="video/mp4" />
+                <source src={demo_video} type="video/mp4" />
                 Your browser does not support the video tag.
             </video>
             <div className="button-container">
