@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import "./Library.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-import test_video from "./TestVideo.mp4";
+import demo_video from "/RPReplay_Final1741140628.mp4";
 
 export default function Library() {
     const navigate = useNavigate();
@@ -17,7 +17,8 @@ export default function Library() {
     const [videos, setVideos] = useState<URL[]>([]);
     const [songs, setSongs] = useState<URL[]>([]);
 
-    const moments = [ test_video,test_video,test_video,test_video,test_video ];
+    const moments = [ demo_video ];
+
 
     const toggleDropdown = () => {
         setIsDropdownOpen((prev) => !prev);
