@@ -1,10 +1,12 @@
 import { myVidMakerFunction } from './functions/vid-maker/resource';
 import { myUploadFunction } from './functions/upload/resource';
-import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { defineBackend } from '@aws-amplify/backend';
 import { storage } from './storage/resource';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
+import { EventType } from 'aws-cdk-lib/aws-s3';
+import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications';
+//import { Policy, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 
 
 const backend = defineBackend({
@@ -12,18 +14,20 @@ const backend = defineBackend({
   data,
   storage,
   myUploadFunction,
-  myVidMakerFunction,
+  myVidMakerFunction
 });
 
-backend.auth.resources.unauthenticatedUserIamRole.addToPrincipalPolicy(
-  new PolicyStatement({
-    actions: [
-      "rekognition:DetectFaces",
-      "rekognition:SearchFacesByImage"
-    ],
-    resources: ['*']
-  })
+const mediaUpload = backend.myUploadFunction.resources.lambda;
+
+backend.storage.resources.bucket.addEventNotification(
+  EventType.OBJECT_CREATED_PUT,
+  new LambdaDestination(mediaUpload),
+  {
+    prefix: 'user-media/image/jpg',
+  }
 )
+
+
 
 backend.addOutput({
   custom:{

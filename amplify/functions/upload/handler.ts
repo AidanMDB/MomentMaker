@@ -1,13 +1,47 @@
 import { RekognitionClient, DetectFacesCommand, CompareFacesCommand} from "@aws-sdk/client-rekognition";
 import { S3Client, HeadObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { S3 } from "aws-cdk-lib/aws-ses-actions";
-//import { Predictions } from "@aws-amplify/predictions";
+import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { S3Handler } from "aws-lambda";
 import sharp from "sharp";
 
 const rekogClient = new RekognitionClient();
 const s3Client = new S3Client();
-/* 
+const dbClient = new DynamoDBClient();
+
+async function compareFaces(croppedImage: Buffer, targetImage: Buffer) {
+    const input = {
+        SourceImage: {
+            Bytes: croppedImage
+        },
+        TargetImage: {
+            Bytes: targetImage
+        }
+    }
+
+    const command = new CompareFacesCommand(input);
+    let response;
+    try {
+        response = await rekogClient.send(command);
+        console.log(response.$metadata);
+    } catch (error) {
+        console.error(error);
+        return error;
+    }
+
+    if (!response.FaceMatches) {
+        console.log("No faces detected");
+        return;
+    }
+
+    for (const match of response.FaceMatches) {
+        console.log(`Similarity: ${match.Similarity}`);
+    }
+
+}
+
+
+
+
 /**
  * Crops image to detected to be stored for comparison purposes
  * @param Left 
@@ -15,8 +49,8 @@ const s3Client = new S3Client();
  * @param Width 
  * @param Height 
  * @returns 
-
-async function cropImageToFace(Left: number, Top: number, Width: number, Height: number) {
+ */
+async function cropToFaceAndCompare(Left: number, Top: number, Width: number, Height: number, S3Path: string, faceNumber: number) {
     const object = await s3Client.send(new GetObjectCommand({ 
         Bucket: "", 
         Key: "" 
@@ -44,13 +78,118 @@ async function cropImageToFace(Left: number, Top: number, Width: number, Height:
         .extract(cropParams)
         .toBuffer();
 
-    const newKey = 'faces/new_face'
+    
+    
+    const input = {
+        "TableName": "UserFaces",
+        "Key": {
+            "userID": {
+                "S": "user1"
+            }
+        }
+    }
+    const command = new GetItemCommand(input);
+    const response = await dbClient.send(command);
+    console.log(response);
+
+    if (!response.Item) {
+        console.log("No faces detected");
+        return;
+    }
+
+    // compare faces
+    let matched = false;
+    for( const face in response.Item.faces) {
+        const input = {
+            "SimilarityThreshold": 90,
+            "SourceImage": {
+                "Bytes": croppedImage
+            },
+            "TargetImage": {
+                "S3Object": {
+                    "Bucket": "MomentMaker",
+                    "Name": face
+                }
+            }
+        }
+    
+        const command = new CompareFacesCommand(input);
+        let response;
+        try {
+            response = await rekogClient.send(command);
+            console.log(response.$metadata);
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+
+        if (response.FaceMatches) {
+            if (response.FaceMatches.length > 0) {
+                console.log("Matching Faces");
+                console.log(response.FaceMatches);
+                const input = {
+                    "TableName": "UserFaces",
+                    "Key": {
+                        "userID": {
+                            "S": "user1"
+                        }
+                    },
+                    "UpdateExpression": "SET faces = list_append(faces, :face)",
+                    "ExpressionAttributeValues": {
+                        ":face": {
+                            "S": S3Path
+                        }
+                    }
+                }
+                const command = new UpdateItemCommand(input);
+                await dbClient.send(command);
+                break;
+            }
+            else {
+                console.log("Faces Don't Match");
+                continue;
+            }
+        }
+    }
+
+    // if face doesn't match existing faces
+    if (!matched) {
+        // upload the cropped unique face
+        const s3Input = {
+            Bucket: "MomentMaker",
+            Key: `${S3Path+faceNumber}`,
+            Body: croppedImage,
+        }
+        const s3command = new PutObjectCommand(s3Input);
+        await s3Client.send(s3command);
+
+        // update the user's faces
+        const dbInput = {
+            "TableName": "UserFaces",
+            "Key": {
+                "userID": {
+                    "S": "user1"
+                }
+            },
+            "UpdateExpression": "SET faces = list_append(faces, :face)",
+            "ExpressionAttributeValues": {
+                ":face": {
+                    "S": `${S3Path+faceNumber}`
+                }
+            }
+        }
+        const command = new UpdateItemCommand(dbInput);
+        await dbClient.send(command);
+        
+    }
+
+/*     const newKey = 'faces/new_face'
     await s3Client.send(new PutObjectCommand({
         Bucket: "",
         Key: newKey,
         Body: croppedImage,
         ContentType: "image/jpeg"
-    }));
+    })); */
 }
 
 
@@ -58,12 +197,12 @@ async function cropImageToFace(Left: number, Top: number, Width: number, Height:
 
 /**
  * Detects faces in a given image
- 
+ */
 async function analyzeImage(s3Path: string) {
     const input = {
         Image: {
             S3Object: {
-                Bucket: "momentmaker",
+                Bucket: "MomentMaker",
                 Name: s3Path
             }
         }
@@ -75,7 +214,7 @@ async function analyzeImage(s3Path: string) {
         console.log(response.$metadata);
     } catch (error) {
         console.error(error);
-        return error;
+        throw error;
     }
 
     if (!response.FaceDetails) {
@@ -83,17 +222,20 @@ async function analyzeImage(s3Path: string) {
         return;
     }
 
+
+    let faceCounter = 0;
     for (const face of response.FaceDetails) {
-        if (face.BoundingBox) {
+
+        if (face.BoundingBox && face.Quality && face.Quality.Sharpness !== undefined && face.Quality.Sharpness > 70) {
             const {Height, Left, Top, Width} = face.BoundingBox;
-            cropImageToFace(Left, Top, Width, Height);
+
+            if (Height !== undefined && Left !== undefined && Top !== undefined && Width !== undefined) {
+                faceCounter++;
+                cropToFaceAndCompare(Left, Top, Width, Height, s3Path, faceCounter);
+            }
         }
     }
-} */
-
-
-
-
+}
 
 
 export const handler: S3Handler = async (event) => {
@@ -102,25 +244,29 @@ export const handler: S3Handler = async (event) => {
     const objectKeys = event.Records.map((record) => record.s3.object.key);
     const bucketName = event.Records[0].s3.bucket.name;
 
-    let allEntities = [];
-
     for (const objectKey of objectKeys) {
-        const heafObjectCommand = new HeadObjectCommand({
-            Bucket: bucketName,
-            Key: objectKey
-        });
-        console.log(`Analyzing image: ${objectKey}`);
 
-        const metadataResponse = await s3Client.send(heafObjectCommand);
-        const metadata = metadataResponse.Metadata;
+        console.log(`Analyzing image: ${objectKey}`);
+        
+        let metadata;
+        try {
+            const headObjectCommand = new HeadObjectCommand({
+                Bucket: bucketName,
+                Key: objectKey
+            });
+            const metadataResponse = await s3Client.send(headObjectCommand);
+            metadata = metadataResponse.Metadata;
+        }
+        catch (error) {
+            console.error(error);
+            throw error;
+        }
+        
         if (!metadata || !metadata.fileType || !metadata.userId) {
             continue;
         }
-        //analyzeImage(objectKey);
+        console.log(metadata.userId);
+        //await analyzeImage(objectKey);
 
     }
-
-
-
-
 };
