@@ -258,14 +258,14 @@ export const handler: S3Handler = async (event) => {
             metadata = metadataResponse.Metadata;
         }
         catch (error) {
-            console.error(error);
+            console.error(`Error retrieving metadata: ${error}`);
             throw error;
         }
         
-        if (!metadata || !metadata.fileType || !metadata.userId) {
-            continue;
-        }
-        console.log(metadata.userId);
+        console.log(metadata);
+        //if (!metadata || !metadata.fileType || !metadata.userId) {
+        //    console.log("No metadata found");
+        //}
         //await analyzeImage(objectKey);
 
     }

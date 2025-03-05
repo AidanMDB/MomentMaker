@@ -20,10 +20,10 @@ const backend = defineBackend({
 const mediaUpload = backend.myUploadFunction.resources.lambda;
 
 backend.storage.resources.bucket.addEventNotification(
-  EventType.OBJECT_CREATED_PUT,
+  EventType.OBJECT_CREATED,
   new LambdaDestination(mediaUpload),
   {
-    prefix: 'user-media/image/jpg',
+    prefix: 'user-media',
   }
 )
 
