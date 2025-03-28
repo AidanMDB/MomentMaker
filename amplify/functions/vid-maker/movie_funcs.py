@@ -1,5 +1,7 @@
 from moviepy.editor import VideoFileClip, ImageClip, concatenate_videoclips
 import sys
+import random
+import os
 
 """
     Merges a list of images and videos into a single video file.
@@ -35,11 +37,19 @@ def merge_media(media_files, output_path, image_duration=3):
         
         clips.append(clip)
 
+    #randomize order of the clips
+    random.shuffle(clips)
+
     # Concatenate all clips
     final_video = concatenate_videoclips(clips, method="compose")
 
+    if final_video.duration > 300: #change this to prioritize videos over images instead of just cutting off after 5 minutes
+        final_video = final_video.subclip(0, 300)
+
     # Export the final video
     final_video.write_videofile(output_path, codec="libx264", fps=24)
+
+    return output_path
 
 """
     Extracts a specific segment from a video file and saves it as a new video.
@@ -63,18 +73,26 @@ def merge_media(media_files, output_path, image_duration=3):
 """
 def parse_video(input_path, output_path, start_time, end_time):
     clip = VideoFileClip(input_path)
-    clip = clip.subclip(start_time, end_time)  # Trim first 5 seconds
+    clip = clip.subclip(start_time, end_time)  # Trim the video
     clip.write_videofile(output_path, codec="libx264")
     return output_path
 
 def handle_files(file_list):
-    for file in file_list:
-        print(f"Processing file: {file}")
+    for index in range(len(file_list)):
+        file = file_list[index]
+        if file.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+            print(f"Processing video: {file}")
+            parse_video(file, os.path.join("trimmed_clips", f"trimmed_{file}"), 10, 30) # change this to be the times that are passed in from the recignition software
+            file_list[index] = os.path.join("trimmed_clips", f"trimmed_{file}")
+
+    return file_list
 
 if __name__ == "__main__":
     # sys.argv will contain the script name as the first element, so we slice [1:]
-    files = sys.argv[1:]
-    final_vid = ''
-    merge_media(files, final_vid)
+    # files = sys.argv[1:]
+    files = [f for f in os.listdir("uploaded_media") if os.path.isfile(os.path.join("uploaded_media", f))]
+    final_vid = 'final_output.mp4'
+    files = handle_files(files)
+    final_vid = merge_media(files, final_vid)
     print(final_vid)
 
