@@ -10,7 +10,7 @@ import CreateAMoment from "./CreateMoment"
 export default function AllStyles() {
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState("Home");
+    const [activeTab, setActiveTab] = useState("library");
 
     const handleLogout = async () => {
         try {

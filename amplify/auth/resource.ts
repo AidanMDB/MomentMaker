@@ -5,15 +5,6 @@ import { referenceAuth } from "@aws-amplify/backend";
  * @see https://docs.amplify.aws/gen2/build-a-backend/auth
  */
 
-// Define the AuthConfig interface
-interface AuthConfig {
-  userPoolId: string;
-  identityPoolId: string;
-  authRoleArn: string;
-  unauthRoleArn: string;
-  userPoolClientId: string;
-}
-
 export const auth = referenceAuth({
     userPoolId: "us-east-1_53upoqrsV", 
     identityPoolId: "us-east-1:7b015516-8413-4a98-85d1-25810a554cda",
