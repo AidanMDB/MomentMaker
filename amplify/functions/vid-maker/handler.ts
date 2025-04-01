@@ -1,12 +1,8 @@
 import { spawn } from "child_process";
 import { S3Client, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { Readable } from "stream";
-import { data } from "../../data/resource";
 import { uploadData } from 'aws-amplify/storage';
 import fs from "fs";
-import fetch from "node-fetch";
-import { writeFile } from "fs/promises";
 import { join, basename } from "path";
 import { pipeline } from "stream";
 import { promisify } from "util";
@@ -40,8 +36,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
     await downloadAllMediaFromS3();
 
-    // const file_data_array = files.map((file) => file.data);
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         const validFileDataArray = keysArray.filter((data): data is string => data !== undefined);
         const pythonProcess = spawn('python', ['movie_funcs.py', ...validFileDataArray]);
 
@@ -54,40 +49,40 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             console.error(`Error: ${data}`);
         });
 
-        if(result.length > 0) {
-            const file = readVideoFile(result);
-            if (!file) {
-                console.error("Error reading video file:", result);
-                return reject({ statusCode: 500, body: "Error reading final moment video file" });
+        pythonProcess.on('close', async (code) => {
+            if (code !== 0) {
+                return reject({ statusCode: 500, body: `Python script exited with code ${code}` });
             }
 
-            try {
-                await uploadData({
-                    path: `user-media/moments/${result}`,
-                    data: file,
-                    options: {
-                        bucket: 'MediaStorage',
-                        metadata: {
-                            fileType: `video/mp4`,
-                            userID: `user1`
+            let file: Buffer | null = null;
+            if (result.length > 0) {
+                file = readVideoFile(result);
+                if (!file) {
+                    console.error("Error reading video file:", result);
+                    return reject({ statusCode: 500, body: "Error reading final moment video file" });
+                }
+
+                try {
+                    await uploadData({
+                        path: `user-media/moments/${result}`,
+                        data: file,
+                        options: {
+                            bucket: 'MediaStorage',
+                            metadata: {
+                                fileType: `video/mp4`,
+                                userID: `user1`
+                            }
                         }
-                    }
-                });
+                    });
 
-                //should I return the video here instead of uploading it to the s3 bucket?
-
-                console.log("Moment uploaded to S3 successfully!");
-            } catch (error) {
-                console.log("Error uploading moment to S3:", error);
+                    console.log("Moment uploaded to S3 successfully!");
+                } catch (error) {
+                    console.log("Error uploading moment to S3:", error);
+                    return reject({ statusCode: 500, body: "Error uploading moment to S3" });
+                }
             }
-        }
 
-        pythonProcess.on('close', (code) => {
-            if (code === 0) {
-                resolve({ statusCode: 200, body: result });
-            } else {
-                reject({ statusCode: 500, body: `Python script exited with code ${code}` });
-            }
+            resolve({ statusCode: 200, body: result });
         });
     });
 };
