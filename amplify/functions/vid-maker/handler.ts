@@ -82,6 +82,22 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
                 }
             }
 
+            try {
+                const directoryPath = "./";
+                const files = fs.readdirSync(directoryPath);
+
+                files.forEach((file) => {
+                    if (file.endsWith(".png") || file.endsWith(".mp4") || file.endsWith(".jpg") || file.endsWith(".jpeg") || file.endsWith(".mp3") || file.endsWith(".mpeg")) {
+                        const filePath = join(directoryPath, file);
+                        fs.unlinkSync(filePath);
+                        console.log(`Deleted file: ${filePath}`);
+                    }
+                });
+            } catch (error) {
+                console.error("Error deleting files:", error);
+                return reject({ statusCode: 500, body: "Error deleting temporary files" });
+            }
+            
             resolve({ statusCode: 200, body: result });
         });
     });
