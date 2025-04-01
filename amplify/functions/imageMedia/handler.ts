@@ -19,6 +19,7 @@ let userID: string; // replace with actual user ID
  * It uses AWS Rekognition to detect faces in the image and filters out faces with confidence > 70%.
  */
 async function detectFaces() {
+    console.log(`Detecting faces`);
     const params = {
         Image: {
             S3Object: {
@@ -39,6 +40,7 @@ async function detectFaces() {
  * @returns {Promise<Buffer>} - Returns the image from S3 as a Buffer.
  */
 async function getS3Image() {
+    console.log(`Getting image from S3`);
     const params = {
         Bucket: `${bucketName}`,
         Key: `${objectKey}`
@@ -55,6 +57,7 @@ async function getS3Image() {
  * @returns buffers of cropped faces
  */
 async function cropFaces(detectedFaces: any[]) {
+    console.log(`Cropping faces`);
     const imageBody = await getS3Image();
     const image = sharp(imageBody);
     const imageMetadata = await image.metadata();
@@ -81,8 +84,9 @@ async function cropFaces(detectedFaces: any[]) {
  * @returns - Array of face references from DynamoDB.
  */
 async function getUserFaces() {
+    console.log(`Getting user faces from DynamoDB`);
     const input = {
-        "TableName": "UserFaces",
+        "TableName": process.env.USER_FACES_TABLE_NAME,
         "Key": {
             "userID": { "S": `${userID}` }
         }
@@ -100,6 +104,7 @@ async function getUserFaces() {
  * @returns - Array of face matches found in the target image.
  */
 async function compareFaces(sourceBuffer: Buffer, targetKey: string) {
+    console.log(`Comparing faces`);
     const params = {
         SimilarityThreshold: 90,
         SourceImage: { Bytes: sourceBuffer },
@@ -118,6 +123,7 @@ async function compareFaces(sourceBuffer: Buffer, targetKey: string) {
  * @param buffer - Buffer of the face image to be uploaded.
  */
 async function uploadFaceToS3(buffer: Buffer) {
+    console.log(`Uploading unique face to S3`);
     // generate a unique key for the face image and upload it to S3
     const uniqueKey = `faces/${userID}/${uuidv4()}.jpg`;
     const params = {
@@ -141,7 +147,7 @@ async function uploadFaceToS3(buffer: Buffer) {
             userID: { S: `${userID}` }
         },
         UpdateExpression: "SET faces = list_append(if_not_exists(faces, :empty_list), :newFace)",
-        TableName: "UserFaces",
+        TableName: process.env.USER_FACES_TABLE_NAME,
     };
 
     try {
@@ -149,7 +155,7 @@ async function uploadFaceToS3(buffer: Buffer) {
     } catch (error) {
         if (error instanceof Error && error.name === "ConditionalCheckFailedException") {
             const putParams = {
-                TableName: "UserFaces",
+                TableName: process.env.USER_FACES_TABLE_NAME,
                 Item: {
                     userID: { S: `${userID}` },
                     faces: { L: [{ S: uniqueKey }] }
@@ -171,6 +177,7 @@ async function uploadFaceToS3(buffer: Buffer) {
  * @param faceID - The ID of the face to which the image location will be added.
  */
 async function addImageToFaceLocations(faceID: string) {
+    console.log(`Adding image location to FaceLocations`);
     const updateParams = {
         ExpressionAttributeNames: {
             "#imageLocations": "imageLocations"
@@ -184,7 +191,7 @@ async function addImageToFaceLocations(faceID: string) {
             faceID: { S: `${faceID}` }
         },
         UpdateExpression: "SET imageLocations = list_append(if_not_exists(imageLocations, :empty_list), :newImage)",
-        TableName: "FaceLocations",
+        TableName: process.env.FACE_LOCATIONS_TABLE_NAME,
     };
 
     try {
@@ -192,7 +199,7 @@ async function addImageToFaceLocations(faceID: string) {
     } catch (error) {
         if (error instanceof Error && error.name === "ConditionalCheckFailedException") {
             const putParams = {
-                TableName: "FaceLocations",
+                TableName: process.env.FACE_LOCATIONS_TABLE_NAME,
                 Item: {
                     userID: { S: `${userID}` },
                     faceID: { S: `${faceID}` },
@@ -246,9 +253,10 @@ async function analyzeImage() {
 export const handler: Handler = async (event) => {
     
     // S3 performs batch operations (so might have multiple keys uploaded at once) thats why multiple keys
-    const payload = JSON.parse(event.body);
-    objectKey = payload.key;
-    bucketName = payload.bucket;
+    console.log(event);
+    //const payload = JSON.parse(event);
+    objectKey = event.key;
+    bucketName = event.bucket;
     userID = "user1"; // replace with call to user's ID from Cognito or other auth service
     console.log(`Analyzing ${objectKey} in ${bucketName}`);
     await analyzeImage();

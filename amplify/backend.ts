@@ -28,6 +28,8 @@ const mediaUpload = backend.myUploadFunction.resources.lambda;
 const imageAnalyzerFunction = backend.imageAnalyzer.resources.lambda;
 const videoAnalyzerFunction = backend.videoAnalyzer.resources.lambda;
 const zipFileExtractorFunction = backend.zipFileExtractor.resources.lambda;
+const userFacesDatabase = backend.data.resources.tables.UserFaces;
+const faceLocationsDatabase = backend.data.resources.tables.FaceLocations;
 
 // Adds notifications to the S3 bucket so mediaUpload function can be triggered when a file is uploaded to the bucket
 backend.storage.resources.bucket.addEventNotification(
@@ -38,15 +40,46 @@ backend.storage.resources.bucket.addEventNotification(
   }
 )
 
+
+// Add the ARN's as enviroment variables to the imageAnalyzer function
+backend.imageAnalyzer.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);
+backend.imageAnalyzer.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsDatabase.tableName);
+
+// Add the ARN's as enviroment variables to the videoAnalyzer function
+backend.myVidMakerFunction.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);
+backend.myVidMakerFunction.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsDatabase.tableName);
+
+// Add the functionARN's as enviroment variables to the mediaUpload function
+backend.myUploadFunction.addEnvironment('IMAGE_ANALYZER_FUNCTION_NAME', imageAnalyzerFunction.functionName);
+backend.myUploadFunction.addEnvironment('VIDEO_ANALYZER_FUNCTION_NAME', videoAnalyzerFunction.functionName);
+backend.myUploadFunction.addEnvironment('ZIP_FILE_EXTRACTOR_FUNCTION_NAME', zipFileExtractorFunction.functionName);
+
+
 // Gives mediaUpload the ability to invoke the imageAnalyzer, videoAnalyzer and zipFileExtractor functions
-imageAnalyzerFunction.grantInvoke(mediaUpload);
-videoAnalyzerFunction.grantInvoke(mediaUpload);
-zipFileExtractorFunction.grantInvoke(mediaUpload);
+//imageAnalyzerFunction.grantInvoke(mediaUpload);
+//videoAnalyzerFunction.grantInvoke(mediaUpload);
+//zipFileExtractorFunction.grantInvoke(mediaUpload);
+//mediaUpload.grantInvoke(imageAnalyzerFunction);
+mediaUpload.addToRolePolicy(
+  new PolicyStatement({
+    actions: ['lambda:InvokeFunction'],
+    resources: [imageAnalyzerFunction.functionArn, videoAnalyzerFunction.functionArn, zipFileExtractorFunction.functionArn],
+  })
+);
 
 // Give imageAnalyzer permission to use AWS rekognition AI
 imageAnalyzerFunction.addToRolePolicy(
   new PolicyStatement({
-    actions: ['rekognition:DetectFaces', 'rekognition:CompareFaces'],
+    actions: 
+    [
+      'rekognition:DetectFaces', 
+      'rekognition:CompareFaces', 
+      'dynamoDB:PutItem', 
+      'dynamoDB:UpdateItem', 
+      'dynamoDB:GetItem',
+      'S3:PutObject',
+      'S3:GetObject'
+    ],
     resources: ["*"],
   })
 )
@@ -54,24 +87,17 @@ imageAnalyzerFunction.addToRolePolicy(
 // Give videoAnalyzer permission to use AWS rekognition AI
 videoAnalyzerFunction.addToRolePolicy(
   new PolicyStatement({
-    actions: ['rekognition:StartFaceDetection', 'rekognition:GetFaceDetection'],
+    actions: 
+    [
+      'rekognition:StartFaceDetection', 
+      'rekognition:GetFaceDetection',
+      'dynamoDB:PutItem', 
+      'dynamoDB:UpdateItem', 
+      'dynamoDB:GetItem',
+      'S3:PutObject',
+      'S3:GetObject'
+    ],
     resources: ["*"],
   })
 )
 
-
-backend.addOutput({
-  custom:{
-    Predictions: {
-      Identify: {
-        IdentifyEntities: {
-          collectionId: "default",
-          maxEntities: 10,
-        },
-        celebrityDetectionEnabled: false,
-        proxy: false,
-        region: backend.auth.stack.region
-      }
-    }
-  }
-})

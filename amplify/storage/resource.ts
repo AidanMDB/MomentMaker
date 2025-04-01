@@ -9,10 +9,10 @@ export const storage = defineStorage({
     access: (allow) => ({
         'user-media/*': [
             allow.guest.to(['read', 'write', 'delete']),
-            allow.resource(myUploadFunction).to(['read', 'write']),
-            allow.resource(imageAnalyzer).to(['read', 'write', 'delete']),
-            allow.resource(videoAnalyzer).to(['read', 'write', 'delete']),
-            allow.resource(zipFileExtractor).to(['read', 'write', 'delete']),
+            //allow.resource(myUploadFunction).to(['read', 'write']),
+            //allow.resource(imageAnalyzer).to(['read', 'write', 'delete']),
+            //allow.resource(videoAnalyzer).to(['read', 'write', 'delete']),
+            //allow.resource(zipFileExtractor).to(['read', 'write', 'delete']),
         ],
     })
 });

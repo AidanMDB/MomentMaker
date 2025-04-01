@@ -14,7 +14,8 @@ const schema = a.schema({
     userID: a.id().required(),
     faces: a.string().array()
   })
-  .identifier(["userID"]),
+  .identifier(["userID"])
+  .authorization((allow) => [allow.publicApiKey()]),
 
   FaceLocations: a.model({
     userID: a.id().required(),
@@ -22,16 +23,10 @@ const schema = a.schema({
     imageLocations: a.string().array()
   })
   .identifier(["userID", "faceID"])
-})
-.authorization((allow) => 
-  [
-    allow.publicApiKey(), 
-    allow.resource(myUploadFunction), 
-    allow.resource(imageAnalyzer), 
-    allow.resource(videoAnalyzer), 
-    allow.resource(zipFileExtractor)
-  ]
-);
+  .authorization((allow) => [allow.publicApiKey()])
+}       );
+//.authorization((allow) => [allow.publicApiKey(), allow.resource(myUploadFunction), allow.resource(imageAnalyzer), allow.resource(videoAnalyzer), allow.resource(zipFileExtractor)]
+//);
 
 export type Schema = ClientSchema<typeof schema>;
 
