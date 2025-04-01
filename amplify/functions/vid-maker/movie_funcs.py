@@ -82,15 +82,14 @@ def handle_files(file_list):
         file = file_list[index]
         if file.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
             print(f"Processing video: {file}")
-            parse_video(file, os.path.join("trimmed_clips", f"trimmed_{file}"), 10, 30) # change this to be the times that are passed in from the recignition software
-            file_list[index] = os.path.join("trimmed_clips", f"trimmed_{file}")
+            parse_video(file, f"trimmed_{file}", 10, 30) # change this to be the times that are passed in from the recignition software
+            file_list[index] = f"trimmed_{file}"
 
     return file_list
 
 if __name__ == "__main__":
     # sys.argv will contain the script name as the first element, so we slice [1:]
-    # files = sys.argv[1:]
-    files = [f for f in os.listdir("uploaded_media") if os.path.isfile(os.path.join("uploaded_media", f))]
+    files = sys.argv[1:]
     final_vid = 'final_output.mp4'
     files = handle_files(files)
     final_vid = merge_media(files, final_vid)

@@ -1,16 +1,25 @@
 import { spawn } from "child_process";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import { Readable } from "stream";
+import { data } from "../../data/resource";
+import { uploadData } from 'aws-amplify/storage';
+import fs from "fs";
+import fetch from "node-fetch";
+import { writeFile } from "fs/promises";
+import { join, basename } from "path";
+import { pipeline } from "stream";
+import { promisify } from "util";
 
-const db = new DynamoDBClient({});
-const s3 = new S3Client({ region: "us-east-1" });
+const pipe = promisify(pipeline);
+
+const s3Client = new S3Client({ region: "us-east-1" });
+
+const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     console.log("Received event:", JSON.stringify(event, null, 2));
 
-    const bucketName = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
     const fileKeys = event.queryStringParameters?.fileKeys;
 
     if (!fileKeys) {
@@ -29,66 +38,109 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         };
     }
 
-    try {
-        const streamToBuffer = async (stream: Readable): Promise<Buffer> => {
-            return new Promise((resolve, reject) => {
-                const chunks: Uint8Array[] = [];
-                stream.on("data", (chunk) => chunks.push(chunk));
-                stream.on("end", () => resolve(Buffer.concat(chunks)));
-                stream.on("error", reject);
-            });
-        };
+    await downloadAllMediaFromS3();
 
-        const files = await Promise.all(keysArray.map(async (fileKey) => {
-            try {
-                const command = new GetObjectCommand({
-                    Bucket: bucketName,
-                    Key: fileKey,
-                });
-                
-                const response = await s3.send(command);
-                if (!response.Body) {
-                    return { fileKey, error: "File not found" };
-                }
+    // const file_data_array = files.map((file) => file.data);
+    return new Promise(async (resolve, reject) => {
+        const validFileDataArray = keysArray.filter((data): data is string => data !== undefined);
+        const pythonProcess = spawn('python', ['movie_funcs.py', ...validFileDataArray]);
 
-                const fileBuffer = await streamToBuffer(response.Body as Readable);
-                const fileBase64 = fileBuffer.toString("base64");
-                const contentType = response.ContentType || "application/octet-stream";
-                
-                return { fileKey, contentType, data: fileBase64 };
-            } catch (error) {
-                console.error(`Error fetching file ${fileKey} from S3:`, error);
-                return { fileKey, error: "Failed to fetch file" };
-            }
-        }));
-
-        const file_data_array = files.map((file) => file.data);
-        return new Promise((resolve, reject) => {
-            const validFileDataArray = file_data_array.filter((data): data is string => data !== undefined);
-            const pythonProcess = spawn('python', ['movie_funcs.py', ...validFileDataArray]);
-    
-            let result = '';
-            pythonProcess.stdout.on('data', (data) => {
-                result += data.toString();
-            });
-    
-            pythonProcess.stderr.on('data', (data) => {
-                console.error(`Error: ${data}`);
-            });
-    
-            pythonProcess.on('close', (code) => {
-                if (code === 0) {
-                    resolve({ statusCode: 200, body: result });
-                } else {
-                    reject({ statusCode: 500, body: `Python script exited with code ${code}` });
-                }
-            });
+        let result = '';
+        pythonProcess.stdout.on('data', (data) => {
+            result += data.toString();
         });
-    } catch (error) {
-        console.error("Error processing files:", error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: "Internal Server Error" }),
-        };
-    }
+
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(`Error: ${data}`);
+        });
+
+        if(result.length > 0) {
+            const file = readVideoFile(result);
+            if (!file) {
+                console.error("Error reading video file:", result);
+                return reject({ statusCode: 500, body: "Error reading final moment video file" });
+            }
+
+            try {
+                await uploadData({
+                    path: `user-media/moments/${result}`,
+                    data: file,
+                    options: {
+                        bucket: 'MediaStorage',
+                        metadata: {
+                            fileType: `video/mp4`,
+                            userID: `user1`
+                        }
+                    }
+                });
+
+                //should I return the video here instead of uploading it to the s3 bucket?
+
+                console.log("Moment uploaded to S3 successfully!");
+            } catch (error) {
+                console.log("Error uploading moment to S3:", error);
+            }
+        }
+
+        pythonProcess.on('close', (code) => {
+            if (code === 0) {
+                resolve({ statusCode: 200, body: result });
+            } else {
+                reject({ statusCode: 500, body: `Python script exited with code ${code}` });
+            }
+        });
+    });
 };
+
+function readVideoFile(filePath: string): Buffer | null {
+    try {
+        const data = fs.readFileSync(filePath);
+        console.log(`Video file read: ${filePath}`);
+        return data;
+    } catch (error) {
+        console.error(`Error reading video file: ${error}`);
+        return null;
+    }
+}
+
+/**
+ * Downloads all media files from an S3 bucket to a specified local directory.
+ * @param bucketName - The name of the S3 bucket.
+ * @param localSavePath - The local directory where files will be saved.
+ */
+export async function downloadAllMediaFromS3() {
+    try {
+      // List all objects in the bucket
+      const listCommand = new ListObjectsV2Command({ Bucket: BUCKET_NAME });
+      const listResponse = await s3Client.send(listCommand);
+  
+      if (!listResponse.Contents) {
+        console.log("No files found in the bucket.");
+        return;
+      }
+  
+      for (const file of listResponse.Contents) {
+        if (!file.Key) continue; // Skip if the key is undefined
+  
+        console.log(`Downloading: ${file.Key}`);
+
+        const fileName = basename(file.Key); // Get only the file name (remove any folder structure)
+        const filePath = join("./", fileName); 
+  
+        // Get the file from S3
+        const getCommand = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: file.Key });
+        const { Body } = await s3Client.send(getCommand);
+  
+        if (Body) {
+          const writeStream = fs.createWriteStream(filePath);
+          await pipe(Body as NodeJS.ReadableStream, writeStream);
+          console.log(`Saved: ${filePath}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error downloading files:", error);
+    }
+}
+  
+
+
