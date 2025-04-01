@@ -25,7 +25,7 @@ export default function Library() {
     useEffect(() => {
         fetchUser();
         fetchMedia();
-    }, []);
+    });
 
     const fetchUser = async () => {
         try {
@@ -35,7 +35,7 @@ export default function Library() {
             console.error("Error fetching user:", error);
         }
     };
-    
+
 
     //Upload
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "video/mp4", "audio/mp3", "audio/mpeg"];
