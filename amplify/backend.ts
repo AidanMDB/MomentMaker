@@ -1,5 +1,8 @@
 import { myVidMakerFunction } from './functions/vid-maker/resource';
 import { myUploadFunction } from './functions/upload/resource';
+import { imageAnalyzer } from './functions/imageMedia/resource';
+import { videoAnalyzer } from './functions/videoMedia/resource';
+import { zipFileExtractor } from './functions/zipFiles/resource';
 import { defineBackend } from '@aws-amplify/backend';
 import { storage } from './storage/resource';
 import { auth } from './auth/resource';
@@ -14,7 +17,10 @@ const backend = defineBackend({
   data,
   storage,
   myUploadFunction,
-  myVidMakerFunction
+  myVidMakerFunction,
+  imageAnalyzer,
+  videoAnalyzer,
+  zipFileExtractor,
 });
 
 const mediaUpload = backend.myUploadFunction.resources.lambda;

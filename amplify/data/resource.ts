@@ -1,5 +1,8 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { myUploadFunction } from "../functions/upload/resource";
+import { imageAnalyzer } from "../functions/imageMedia/resource";
+import { videoAnalyzer } from "../functions/videoMedia/resource";
+import { zipFileExtractor } from "../functions/zipFiles/resource";
 /*== STEP 1 ===============================================================
 The section below creates a Todo database table with a "content" field. Try
 adding a new "isDone" field as a boolean. The authorization rule below
@@ -20,7 +23,15 @@ const schema = a.schema({
   })
   .identifier(["userID", "faceID"])
 })
-.authorization((allow) => [allow.publicApiKey(), allow.resource(myUploadFunction)]);
+.authorization((allow) => 
+  [
+    allow.publicApiKey(), 
+    allow.resource(myUploadFunction), 
+    allow.resource(imageAnalyzer), 
+    allow.resource(videoAnalyzer), 
+    allow.resource(zipFileExtractor)
+  ]
+);
 
 export type Schema = ClientSchema<typeof schema>;
 

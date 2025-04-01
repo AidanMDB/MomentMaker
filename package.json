@@ -11,8 +11,8 @@
     "test": "jest --coverage --coverageDirectory=/dev/null --passWithNoTests"
   },
   "dependencies": {
-    "@aws-amplify/storage": "^6.7.11",
     "@aws-amplify/predictions": "^6.1.43",
+    "@aws-amplify/storage": "^6.7.11",
     "@aws-amplify/ui-react": "^6.5.5",
     "@aws-amplify/ui-react-storage": "^3.7.2",
     "@aws-sdk/client-dynamodb": "^3.758.0",
@@ -24,7 +24,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.1.5",
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.5.0",
