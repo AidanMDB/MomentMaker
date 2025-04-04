@@ -30,6 +30,7 @@ const videoAnalyzerFunction = backend.videoAnalyzer.resources.lambda;
 const zipFileExtractorFunction = backend.zipFileExtractor.resources.lambda;
 const userFacesDatabase = backend.data.resources.tables.UserFaces;
 const faceLocationsDatabase = backend.data.resources.tables.FaceLocations;
+const storageS3 = backend.storage.resources.bucket
 
 // Adds notifications to the S3 bucket so mediaUpload function can be triggered when a file is uploaded to the bucket
 backend.storage.resources.bucket.addEventNotification(
@@ -56,16 +57,20 @@ backend.myUploadFunction.addEnvironment('ZIP_FILE_EXTRACTOR_FUNCTION_NAME', zipF
 
 
 // Gives mediaUpload the ability to invoke the imageAnalyzer, videoAnalyzer and zipFileExtractor functions
-//imageAnalyzerFunction.grantInvoke(mediaUpload);
-//videoAnalyzerFunction.grantInvoke(mediaUpload);
-//zipFileExtractorFunction.grantInvoke(mediaUpload);
-//mediaUpload.grantInvoke(imageAnalyzerFunction);
 mediaUpload.addToRolePolicy(
   new PolicyStatement({
     actions: ['lambda:InvokeFunction'],
     resources: [imageAnalyzerFunction.functionArn, videoAnalyzerFunction.functionArn, zipFileExtractorFunction.functionArn],
   })
 );
+
+//storageS3.addToResourcePolicy(
+//  new PolicyStatement({
+//    actions: ['s3:GetObject'],
+//    resources: []
+//  })
+//)
+
 
 // Give imageAnalyzer permission to use AWS rekognition AI
 imageAnalyzerFunction.addToRolePolicy(

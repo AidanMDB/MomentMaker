@@ -5,9 +5,9 @@ import { Handler } from "aws-lambda";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 
-const rekogClient = new RekognitionClient();
-const s3Client = new S3Client();
-const dbClient = new DynamoDBClient();
+const rekogClient = new RekognitionClient({region: 'us-east-1'});
+const s3Client = new S3Client({region: 'us-east-1'});
+const dbClient = new DynamoDBClient({region: 'us-east-1'});
 
 let bucketName: string;
 let objectKey: string;
@@ -79,6 +79,7 @@ async function cropFaces(detectedFaces: any[]) {
     return faceBuffers;
 }
 
+
 /**
  * Function gets all the unique face references from DynamoDB for the user.
  * @returns - Array of face references from DynamoDB.
@@ -146,7 +147,7 @@ async function uploadFaceToS3(buffer: Buffer) {
         Key: {
             userID: { S: `${userID}` }
         },
-        UpdateExpression: "SET faces = list_append(if_not_exists(faces, :empty_list), :newFace)",
+        UpdateExpression: "SET #faces = list_append(if_not_exists(#faces, :empty_list), :newFace)",
         TableName: process.env.USER_FACES_TABLE_NAME,
     };
 
@@ -169,7 +170,9 @@ async function uploadFaceToS3(buffer: Buffer) {
         }
     }
     console.log(`Stored face reference in DynamoDB`);
+    return uniqueKey;
 }
+
 
 /**
  * Adds the image location to the face locations in DynamoDB.
@@ -190,7 +193,7 @@ async function addImageToFaceLocations(faceID: string) {
             userID: { S: `${userID}` },
             faceID: { S: `${faceID}` }
         },
-        UpdateExpression: "SET imageLocations = list_append(if_not_exists(imageLocations, :empty_list), :newImage)",
+        UpdateExpression: "SET #imageLocations = list_append(if_not_exists(#imageLocations, :empty_list), :newImage)",
         TableName: process.env.FACE_LOCATIONS_TABLE_NAME,
     };
 
@@ -216,6 +219,7 @@ async function addImageToFaceLocations(faceID: string) {
     console.log(`Added user to DynamoDB`);
 }
 
+
 /**
  * Detects faces in a given image
  */
@@ -232,7 +236,7 @@ async function analyzeImage() {
 
     for (const faceBuffer of faceBuffers) {
         let isUnique = true;
-
+        let storedFace;
         for (const storedFace in storedFaces) {
             const match = await compareFaces(faceBuffer, storedFace);
             if (match.length) {
@@ -244,7 +248,8 @@ async function analyzeImage() {
         }
 
         if (isUnique) {
-            await uploadFaceToS3(faceBuffer);
+            const locKey = await uploadFaceToS3(faceBuffer);
+            await addImageToFaceLocations(locKey);
         }
     }
 }
