@@ -18,6 +18,7 @@
     "@fortawesome/fontawesome-free": "^6.7.2",
     "aws-amplify": "^6.14.1",
     "lucide-react": "^0.475.0",
+    "nvm": "^0.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.1.5"
@@ -32,7 +33,7 @@
     "@typescript-eslint/parser": "^7.2.0",
     "@vitejs/plugin-react": "^4.2.1",
     "aws-cdk": "^2.163.1",
-    "aws-cdk-lib": "^2.138.0",
+    "aws-cdk-lib": "^2.163.1",
     "constructs": "^10.3.0",
     "esbuild": "^0.20.2",
     "eslint": "^8.57.0",
