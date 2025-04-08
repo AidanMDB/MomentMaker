@@ -126,7 +126,7 @@ async function compareFaces(sourceBuffer: Buffer, targetKey: string) {
 async function uploadFaceToS3(buffer: Buffer) {
     console.log(`Uploading unique face to S3`);
     // generate a unique key for the face image and upload it to S3
-    const uniqueKey = `faces/${userID}/${uuidv4()}.jpg`;
+    const uniqueKey = `user-media/${userID}/faces/${uuidv4()}.jpg`;
     const params = {
         Bucket: `${bucketName}`,
         Key: uniqueKey,

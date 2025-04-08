@@ -41,6 +41,8 @@ backend.storage.resources.bucket.addEventNotification(
   }
 )
 
+backend.myVidMakerFunction.resources.lambda.addEventSourceMapping('MyVidMakerFunctionEventSource', {});
+
 
 // Add the table names as enviroment variables to the imageAnalyzer function
 backend.imageAnalyzer.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);
