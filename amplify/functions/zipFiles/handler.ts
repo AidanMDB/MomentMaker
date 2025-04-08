@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const s3Client = new S3Client();
 const allowedFileTypes = ['.jpg', '.jpeg', '.png', '.mp4'];
-
+const userID = "user1";
 
 async function streamToBuffer(stream: Readable): Promise<Buffer> {
     const chunks: Uint8Array[] = [];
@@ -61,19 +61,19 @@ export const handler: Handler = async (event) => {
         
         if (fileExtension === 'jpg' || 'jpeg' || 'png') {
             const fileBuffer = zipEntry.getData();
-            const newKey = `user-media/image/${uuidv4()}.${fileExtension}`;
+            const newKey = `user-media/${userID}/image/${uuidv4()}.${fileExtension}`;
             await uploadToS3(newKey, fileBuffer);
             console.log(`Uploaded image: ${newKey}`);
         }
         else if (fileExtension === 'mp4' || 'mov' || 'avi' || 'mkv') {
             const fileBuffer = zipEntry.getData();
-            const newKey = `user-media/video/${uuidv4()}.${fileExtension}`;
+            const newKey = `user-media/${userID}/video/${uuidv4()}.${fileExtension}`;
             await uploadToS3(newKey, fileBuffer);
             console.log(`Uploaded video: ${newKey}`);
         }
         else if (fileExtension === 'mp3' || 'mpeg') {
             const fileBuffer = zipEntry.getData();
-            const newKey = `user-media/audio/${uuidv4()}.${fileExtension}`;
+            const newKey = `user-media/${userID}/audio/${uuidv4()}.${fileExtension}`;
             await uploadToS3(newKey, fileBuffer);
             console.log(`Uploaded audio: ${newKey}`);
         }
