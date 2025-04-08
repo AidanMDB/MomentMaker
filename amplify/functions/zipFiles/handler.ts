@@ -45,6 +45,8 @@ async function uploadToS3(key: string, body: Buffer) {
 }
 
 
+// Do security and file size checks
+
 export const handler: Handler = async (event) => {
     console.log('Event: ', event);
     
