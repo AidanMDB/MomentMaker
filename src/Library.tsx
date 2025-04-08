@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { uploadData, list, getUrl } from 'aws-amplify/storage';
+import { getCurrentUser } from 'aws-amplify/auth';
 import "./AllStyles.css"
 import "./Library.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -9,6 +10,7 @@ import demo_video from "/RPReplay_Final1741140628.mp4";
 export default function Library() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState("Photos");
+    const [userID, setUserID] = useState<string | null>(null);
     const [photos, setPhotos] = useState<URL[]>([]);
     const [videos, setVideos] = useState<URL[]>([]);
     const [songs, setSongs] = useState<URL[]>([]);
@@ -21,8 +23,19 @@ export default function Library() {
     
     //Upon Loading
     useEffect(() => {
+        fetchUser();
         fetchMedia();
-    }, []);
+    });
+
+    const fetchUser = async () => {
+        try {
+            const user = await getCurrentUser();
+            setUserID(user.userId);
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    };
+
 
     //Upload
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "video/mp4", "audio/mp3", "audio/mpeg"];
@@ -46,20 +59,19 @@ export default function Library() {
 
             try {
                 await uploadData({
-                    path: `user-media/${type}/${file.name}`,
+                    path: `user-media/${userID}/${type}/${file.name}`,
                     data: file,
                     options: {
                         bucket: 'MediaStorage',
                         metadata: {
                             fileType: `${file.type}`,
-                            userID: `user1`
+                            userID: `${userID}`
                         }
                     }
                 });
 
-                alert("Upload successful!");
             } catch (error) {
-                alert("Upload failed!");
+                console.error("Error uploading media:", error);
             }
             
             fetchMedia();
@@ -68,9 +80,9 @@ export default function Library() {
 
     const fetchMedia = async () => {
         try {
-            const { items: photoResults } = await list({ path: "user-media/image/" });
-            const { items: videoResults } = await list({ path: "user-media/video/" });
-            const { items: songResults } = await list({ path: "user-media/audio/" });
+            const { items: photoResults } = await list({ path: `user-media/${userID}/image/` });
+            const { items: videoResults } = await list({ path: `user-media/${userID}/video/` });
+            const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
 
             const photoUrls = await Promise.all(
                 photoResults.map(async (file) => {

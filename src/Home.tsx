@@ -9,7 +9,7 @@ export default function Home() {
     return (
         <main>
             <div className="topbar_home">
-                <button className="login" onClick={() => navigate("/all")}>Log In</button>
+                <button className="login" onClick={() => navigate("/login")}>Log In</button>
             </div>
             <div className="logo">
             <img src={logo} alt="Centered" className="image" />
