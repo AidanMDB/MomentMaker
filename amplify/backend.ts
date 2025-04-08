@@ -42,15 +42,15 @@ backend.storage.resources.bucket.addEventNotification(
 )
 
 
-// Add the ARN's as enviroment variables to the imageAnalyzer function
+// Add the table names as enviroment variables to the imageAnalyzer function
 backend.imageAnalyzer.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);
 backend.imageAnalyzer.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsDatabase.tableName);
 
-// Add the ARN's as enviroment variables to the videoAnalyzer function
+// Add the table names as enviroment variables to the videoAnalyzer function
 backend.myVidMakerFunction.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);
 backend.myVidMakerFunction.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsDatabase.tableName);
 
-// Add the functionARN's as enviroment variables to the mediaUpload function
+// Add the table names as enviroment variables to the mediaUpload function
 backend.myUploadFunction.addEnvironment('IMAGE_ANALYZER_FUNCTION_NAME', imageAnalyzerFunction.functionName);
 backend.myUploadFunction.addEnvironment('VIDEO_ANALYZER_FUNCTION_NAME', videoAnalyzerFunction.functionName);
 backend.myUploadFunction.addEnvironment('ZIP_FILE_EXTRACTOR_FUNCTION_NAME', zipFileExtractorFunction.functionName);
