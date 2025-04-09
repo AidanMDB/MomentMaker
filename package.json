@@ -11,6 +11,7 @@
     "test": "jest --coverage --coverageDirectory=/dev/null --passWithNoTests"
   },
   "dependencies": {
+    "@aws-amplify/data-construct": "^1.15.1",
     "@aws-amplify/storage": "^6.7.11",
     "@aws-amplify/ui-react": "^6.9.5",
     "@aws-amplify/ui-react-storage": "^3.7.2",
