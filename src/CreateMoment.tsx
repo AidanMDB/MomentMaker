@@ -37,7 +37,7 @@ export default function Library() {
             <div className="identification_block">
                 <div className="bottom_container">
                     <div className="topbar_customization">
-                        <h2 style={{ color: 'black', cursor: "default" }}>Person Identification</h2>
+                        <h2 style={{ color: '#9c6bae', cursor: "default" }}>Person Identification</h2>
                     </div>
                     <PersonIdCheckbox options={people} selectedValues={selectedPersons} onSelect={setSelectedPersons} />
                 </div>
@@ -45,7 +45,7 @@ export default function Library() {
             <div className="features_block">
                 <div className="bottom_container">
                     <div className="topbar_customization">
-                            <h2 style={{ color: 'black', cursor: "default" }}>Personalized Features</h2>
+                            <h2 style={{ color: '#9c6bae', cursor: "default" }}>Personalized Features</h2>
                         </div> 
                     <span className="feature_name"> Song Selection </span>
                     <select className="feature_dropbox" value={selectedSong} onChange={(e) => setSelectedSong(e.target.value)}>

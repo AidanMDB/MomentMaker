@@ -26,7 +26,7 @@
   .close-button {
     position: absolute;
     top: 10px;
-    right: 10px;
+    right: 20px;
     border: none;
     background: none;
     font-size: 25px;
@@ -63,7 +63,7 @@
 
 .save_button, .redo_button {
     background-color: var(--light-purple);
-    color: black;
+    color: var(--light-gray);
     font-size: 18px;
     padding: 10px 20px;
     margin: 0 15px;
@@ -73,9 +73,4 @@
     transition: background 0.3s;
     width: 150px;
 }
-
-.save_button:hover, .redo_button:hover {
-  background-color: var(--dark-purple);
-}
-
   

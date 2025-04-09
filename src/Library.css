@@ -3,21 +3,22 @@
     flex-direction: column;
     height: 100%;
     width: 100%;
-    background: var(--dark-gray);
+    background: var(--light-gray);
   }
 
 .topbar_media {
     display: flex;
     align-items: center;
     padding: 0 15px;
-    background: var(--dark-purple);
-    height: 50px;
+    background: var(--light-gray);
+    height: 60px;
     border-radius: 4px 4px 0px 0px;
     flex-shrink: 0; 
+    box-shadow: 0 1px 3px var(--darker-gray);
 }
 
 .media_clickable_word {
-    color: var(--light-gray);
+    color: var(--light-purple);
     font-size: 25px;
     padding-left: 10px;
     padding-right: 10px;
@@ -28,11 +29,12 @@
 }
 
 .media_clickable_word.active {
-    color: var(--light-purple)
+    border-bottom: 2px solid var(--light-purple);
+    background: transparent;
 }
 
 .media_bar {
-    color: var(--light-gray);
+    color: var(--light-purple);
     font-size: 30px;
     padding-left: 10px;
     padding-right: 10px;
@@ -41,8 +43,8 @@
 
 .upload_button {
     font-size: 30px;
-    color: var(--light-gray);
-    background: var(--dark-purple);
+    color: var(--light-purple);
+    background: transparent;
     border: none;
     padding-top: 5px;
     cursor: pointer;
