@@ -16,29 +16,27 @@ const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     console.log("Received event:", JSON.stringify(event, null, 2));
 
-    const fileKeys = event.queryStringParameters?.fileKeys;
+    const userID = event.queryStringParameters?.userID;
+    // const faceID = event.queryStringParameters?.faceID;
 
-    if (!fileKeys) {
+    if (!userID) {
         return {
             statusCode: 400,
-            body: JSON.stringify({ error: "Missing fileKeys parameter" }),
+            body: JSON.stringify({ error: "Missing userID parameter" }),
         };
     }
 
-    // Parse fileKeys as an array
-    const keysArray = JSON.parse(fileKeys);
-    if (!Array.isArray(keysArray) || keysArray.length === 0) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error: "Invalid fileKeys parameter. Must be a JSON array." }),
-        };
-    }
+    // if (!faceID) {
+    //     return {
+    //         statusCode: 400,
+    //         body: JSON.stringify({ error: "Missing faceID parameter" }),
+    //     };
+    // }
 
-    await downloadAllMediaFromS3();
+    const downloadedFiles = await downloadAllMediaFromS3(userID);
 
     return new Promise((resolve, reject) => {
-        const validFileDataArray = keysArray.filter((data): data is string => data !== undefined);
-        const pythonProcess = spawn('python', ['movie_funcs.py', ...validFileDataArray]);
+        const pythonProcess = spawn('python', ['movie_funcs.py', ...downloadedFiles]);
 
         let result = '';
         pythonProcess.stdout.on('data', (data) => {
@@ -119,38 +117,41 @@ function readVideoFile(filePath: string): Buffer | null {
  * @param bucketName - The name of the S3 bucket.
  * @param localSavePath - The local directory where files will be saved.
  */
-export async function downloadAllMediaFromS3() {
+export async function downloadAllMediaFromS3(userID: string): Promise<string[]> {
+    const downloadedFiles: string[] = [];
     try {
-      // List all objects in the bucket
-      const listCommand = new ListObjectsV2Command({ Bucket: BUCKET_NAME });
-      const listResponse = await s3Client.send(listCommand);
-  
-      if (!listResponse.Contents) {
-        console.log("No files found in the bucket.");
-        return;
-      }
-  
-      for (const file of listResponse.Contents) {
-        if (!file.Key) continue; // Skip if the key is undefined
-  
-        console.log(`Downloading: ${file.Key}`);
-
-        const fileName = basename(file.Key); // Get only the file name (remove any folder structure)
-        const filePath = join("./", fileName); 
-  
-        // Get the file from S3
-        const getCommand = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: file.Key });
-        const { Body } = await s3Client.send(getCommand);
-  
-        if (Body) {
-          const writeStream = fs.createWriteStream(filePath);
-          await pipe(Body as NodeJS.ReadableStream, writeStream);
-          console.log(`Saved: ${filePath}`);
+        // List all objects in the bucket
+        const listCommand = new ListObjectsV2Command({ Bucket: BUCKET_NAME, Prefix: `user-media/${userID}/` });
+        const listResponse = await s3Client.send(listCommand);
+    
+        if (!listResponse.Contents) {
+            console.log("No files found in the bucket.");
+            return downloadedFiles;
         }
-      }
+
+        for (const file of listResponse.Contents) {
+            if (!file.Key) continue; // Skip if the key is undefined
+    
+            console.log(`Downloading: ${file.Key}`);
+
+            const fileName = basename(file.Key); // Get only the file name (remove any folder structure)
+            const filePath = join("./", fileName); 
+    
+            // Get the file from S3
+            const getCommand = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: file.Key });
+            const { Body } = await s3Client.send(getCommand);
+    
+            if (Body) {
+                const writeStream = fs.createWriteStream(filePath);
+                await pipe(Body as NodeJS.ReadableStream, writeStream);
+                console.log(`Saved: ${filePath}`);
+                downloadedFiles.push(fileName); // Add the file name to the array
+            }
+        }
     } catch (error) {
-      console.error("Error downloading files:", error);
+        console.error("Error downloading files:", error);
     }
+    return downloadedFiles;
 }
   
 
