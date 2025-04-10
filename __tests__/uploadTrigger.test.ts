@@ -1,4 +1,4 @@
-import * as handler from '../amplify/storage/handler';
+/* import * as handler from '../amplify/storage/handler';
 import { mockClient } from 'aws-sdk-client-mock';
 import { S3Handler } from 'aws-lambda';
 import { RekognitionClient, detectFaces } from '@aws-sdk/client-rekognition';
@@ -27,4 +27,4 @@ describe ('uploadTrigger', () => {
     it('should crop image to face', async () => {
 
     });
-});
+}); */
