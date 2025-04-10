@@ -35,7 +35,7 @@ const zipFileExtractorFunction = backend.zipFileExtractor.resources.lambda;
 const userFacesDatabase = backend.data.resources.tables.UserFaces;
 const faceLocationsDatabase = backend.data.resources.tables.FaceLocations;
 const videoAnalyzerFunction = backend.videoAnalyzer.resources.lambda;
-const storageS3 = backend.storage.resources.bucket;
+//const storageS3 = backend.storage.resources.bucket;
 
 // Adds notifications to the S3 bucket so mediaUpload function can be triggered when a file is uploaded to the bucket
 backend.storage.resources.bucket.addEventNotification(

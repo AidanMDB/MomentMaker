@@ -6,5 +6,5 @@ export const storage = defineStorage({
         'user-media/*': [
             allow.guest.to(['read', 'write', 'delete']),
         ],
-    })
+    }),
 });
