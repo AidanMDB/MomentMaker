@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getCurrentUser } from 'aws-amplify/auth';
+import { list } from 'aws-amplify/storage';
 import PreviewMoment from './PreviewMoment'
 import PersonIdCheckbox from "./PersonIdCheckbox.tsx";
 import "./AllStyles.css"
@@ -12,24 +14,62 @@ import face4 from "/istockphoto-1320651997-612x612.jpg";
 import face5 from "/images.jpg";
 
 export default function Library() {
+    const [userID, setUserID] = useState<string | null>(null);
     const [isPreviewOpen, setPreviewOpen] = useState(false);
+    const [songs, setSongs] = useState<string[]>([]);
     const [selectedPersons, setSelectedPersons] = useState<string[]>([]);
-    const [selectedSong, setSelectedSong] = useState("Happy");
-    const [selectedTime, setSelectedTime] = useState("5 minutes");
+    const [selectedSong, setSelectedSong] = useState("Upload Songs");
+    const [selectedTime, setSelectedTime] = useState<number>(60);
 
     const people = [ { name: "Jane", image: face1 }, { name: "Mike", image: face2 }, { name: "Stacy", image: face3 }, { name: "Sarah", image: face4 }, { name: "Bob", image: face5 } ];
-    const songs = ["Happy","Sad","Angry","Calm"];
-    const times = ["30 seconds", "1 minute", "5 minutes"];
 
     const openPreview = () => setPreviewOpen(true);
     const closePreview = () => setPreviewOpen(false);
+
+    useEffect(() => {
+        fetchSongs();
+        fetchUser();
+    });
+
+    const fetchUser = async () => {
+        try {
+            const user = await getCurrentUser();
+            setUserID(user.userId);
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    };
+
+    const fetchSongs = async () => {
+        try {
+            const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
+
+            const songNames = songResults.map((file) => {
+                const pathParts = file.path.split('/');
+                return pathParts[pathParts.length - 1].replace(/\.[^/.]+$/, "");
+            });
+
+            setSongs(songNames);
+        } catch (error) {
+            console.error("Error fetching media:", error);
+        }
+    };
 
     const handleRedo = () => {
         alert("Redo button clicked!");
       };
     
-      const handleSave = () => {
-        alert("Save button clicked!");
+    const handleSave = () => {
+    alert("Save button clicked!");
+      };
+
+    const handleTimeChange = (value: number, unit: 'minutes' | 'seconds') => {
+        const minutes = unit === 'minutes' ? value : Math.floor(selectedTime / 60);
+        const seconds = unit === 'seconds' ? value : selectedTime % 60;
+      
+        const total = minutes * 60 + seconds;
+        const clamped = Math.min(total, 300);
+        setSelectedTime(clamped);
       };
 
     return (
@@ -54,11 +94,33 @@ export default function Library() {
                         ))}
                     </select>
                     <span className="feature_name"> Time Constraint </span>
-                    <select className="feature_dropbox" value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)}>
-                        {times.map((time, index) => (
-                            <option key={index} value={time}> {time} </option>
-                        ))}
-                    </select>
+                    <div className="time_column">
+                        <select
+                            className="time_dropbox"
+                            value={Math.floor(selectedTime / 60)}
+                            onChange={(e) => handleTimeChange(Number(e.target.value), 'minutes')}
+                            >
+                            {[...Array(6)].map((_, i) => (
+                                <option key={i} value={i}>
+                                {i}
+                                </option>
+                            ))}
+                        </select>
+                        <label className="time_words">Minutes</label>
+                        <select
+                            className="time_dropbox"
+                            value={selectedTime % 60}
+                            onChange={(e) => handleTimeChange(Number(e.target.value), 'seconds')}
+                            size={1}
+                            >
+                            {[...Array(60)].map((_, i) => (
+                                <option key={i} value={i}>
+                                {i < 10 ? `0${i}` : i}
+                                </option>
+                            ))}
+                        </select>
+                        <label className="time_words">Seconds</label>
+                    </div>
                 </div>
             </div>
             <button className="submit_button"  onClick={openPreview}> Submit </button>
