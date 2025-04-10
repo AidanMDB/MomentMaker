@@ -1,7 +1,7 @@
 import { defineFunction } from "@aws-amplify/backend";
 
 export const videoStarter = defineFunction({
-    name: 'VideoMediaUpload',         
+    name: 'VideoStarter',         
     timeoutSeconds: 120,         
     memoryMB: 1024,
     runtime: 20,

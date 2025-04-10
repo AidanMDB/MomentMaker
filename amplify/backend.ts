@@ -1,7 +1,7 @@
 import { myVidMakerFunction } from './functions/vid-maker/resource';
 import { myUploadFunction } from './functions/upload/resource';
 import { imageAnalyzer } from './functions/imageMedia/resource';
-import { videoStarter } from './functions/videoMedia/resource';
+import { videoStarter } from './functions/videoStarter/resource';
 import { zipFileExtractor } from './functions/zipFiles/resource';
 import { videoAnalyzer } from './functions/videoAnalyzer/resource';
 import { defineBackend } from '@aws-amplify/backend';
@@ -72,23 +72,28 @@ videoSNS.addToResourcePolicy(
 
 
 // add the NAMES to videoAnalyzer function
+//backend.videoAnalyzer.addEnvironment('S3_BUCKET_NAME', storageS3.bucketName);
 backend.videoAnalyzer.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);
 backend.videoAnalyzer.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsDatabase.tableName);
-backend.videoAnalyzer.addEnvironment('S3_BUCKET_NAME', storageS3.bucketName);
 
 // Add the table names as enviroment variables to the imageAnalyzer function
 backend.imageAnalyzer.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);
 backend.imageAnalyzer.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsDatabase.tableName);
+
 
 // add the SNS topic ARN as an environment variable to the videoAnalyzer function
 backend.videoStarter.addEnvironment('SNS_TOPIC_ARN', videoSNS.topicArn);
 backend.videoStarter.addEnvironment('REKOGNITION_ROLE_ARN', rekognitionPublishRole.roleArn);
 
 // Add the table names as enviroment variables to the mediaUpload function
-backend.myUploadFunction.addEnvironment('IMAGE_ANALYZER_FUNCTION_NAME', imageAnalyzerFunction.functionName);
 backend.myUploadFunction.addEnvironment('VIDEO_ANALYZER_FUNCTION_NAME', videoStarterFunction.functionName);
+backend.myUploadFunction.addEnvironment('IMAGE_ANALYZER_FUNCTION_NAME', imageAnalyzerFunction.functionName);
 backend.myUploadFunction.addEnvironment('ZIP_FILE_EXTRACTOR_FUNCTION_NAME', zipFileExtractorFunction.functionName);
 
+// Add the bucket name as an environment variable to the videoAnalyzer function
+//backend.videoAnalyzer.addEnvironment('S3_BUCKET_NAME', storageS3.bucketName);
+backend.videoAnalyzer.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);
+backend.videoAnalyzer.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsDatabase.tableName);
 
 // Gives mediaUpload the ability to invoke the imageAnalyzer, videoAnalyzer and zipFileExtractor functions
 mediaUpload.addToRolePolicy(
@@ -113,6 +118,22 @@ imageAnalyzerFunction.addToRolePolicy(
     [
       'rekognition:DetectFaces', 
       'rekognition:CompareFaces', 
+      'dynamoDB:PutItem', 
+      'dynamoDB:UpdateItem', 
+      'dynamoDB:GetItem',
+      'S3:PutObject',
+      'S3:GetObject'
+    ],
+    resources: ["*"],
+  })
+)
+
+videoAnalyzerFunction.addToRolePolicy(
+  new PolicyStatement({
+    actions: 
+    [
+      'rekognition:GetFaceDetection',
+      'rekognition:CompareFaces',
       'dynamoDB:PutItem', 
       'dynamoDB:UpdateItem', 
       'dynamoDB:GetItem',
