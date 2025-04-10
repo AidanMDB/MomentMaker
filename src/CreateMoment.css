@@ -29,7 +29,7 @@
     background: var(--light-gray);
     display: flex;
     align-items: center;
-    height: 255px;
+    height: auto;
     margin-top: 25px;
     margin-bottom: 25px;
     border-radius: 4px;
@@ -75,6 +75,7 @@
     height: auto;
     margin: 0px 15px;
     cursor: pointer;
+    border-radius: 8px;
 }
 
 .feature_dropbox:focus {
@@ -87,4 +88,26 @@
     border: 1px solid var(--dark-gray);
     color: var(--light-purple);
     cursor: pointer;
+}
+
+.time_dropbox {
+    background-color: var(--dark-gray);
+    outline: 1px solid var(--dark-gray);
+    border: 1px solid var(--dark-gray);
+    color: var(--light-purple);
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 18px;
+    padding: 4px 8px;
+    margin-bottom: 20px;
+    margin-left: 15px;
+    border-radius: 8px;
+  }
+
+  .time_words {
+    padding-left: 10px;
+  }
+
+.time_columns {
+    display: flex;
 }
