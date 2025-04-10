@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getCurrentUser } from 'aws-amplify/auth';
+import { list, getUrl } from 'aws-amplify/storage';
 import PreviewMoment from './PreviewMoment'
 import PersonIdCheckbox from "./PersonIdCheckbox.tsx";
 import "./AllStyles.css"
@@ -12,17 +14,47 @@ import face4 from "/istockphoto-1320651997-612x612.jpg";
 import face5 from "/images.jpg";
 
 export default function Library() {
+    const [userID, setUserID] = useState<string | null>(null);
     const [isPreviewOpen, setPreviewOpen] = useState(false);
+    const [songs, setSongs] = useState<string[]>([]);
     const [selectedPersons, setSelectedPersons] = useState<string[]>([]);
     const [selectedSong, setSelectedSong] = useState("Happy");
     const [selectedTime, setSelectedTime] = useState("5 minutes");
 
     const people = [ { name: "Jane", image: face1 }, { name: "Mike", image: face2 }, { name: "Stacy", image: face3 }, { name: "Sarah", image: face4 }, { name: "Bob", image: face5 } ];
-    const songs = ["Happy","Sad","Angry","Calm"];
     const times = ["30 seconds", "1 minute", "5 minutes"];
 
     const openPreview = () => setPreviewOpen(true);
     const closePreview = () => setPreviewOpen(false);
+
+    useEffect(() => {
+        fetchSongs();
+        fetchUser();
+    });
+
+    const fetchUser = async () => {
+        try {
+            const user = await getCurrentUser();
+            setUserID(user.userId);
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    };
+
+    const fetchSongs = async () => {
+        try {
+            const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
+
+            const songNames = songResults.map((file) => {
+                const pathParts = file.path.split('/');
+                return pathParts[pathParts.length - 1].replace(/\.[^/.]+$/, "");
+            });
+
+            setSongs(songNames);
+        } catch (error) {
+            console.error("Error fetching media:", error);
+        }
+    };
 
     const handleRedo = () => {
         alert("Redo button clicked!");
