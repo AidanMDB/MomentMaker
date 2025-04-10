@@ -15,12 +15,12 @@ import face5 from "/images.jpg";
 export default function Library() {
     const [userID, setUserID] = useState<string | null>(null);
     const [isPreviewOpen, setPreviewOpen] = useState(false);
-    const [songs, setSongs] = useState<string[]>([]);
     const [selectedPersons, setSelectedPersons] = useState<string[]>([]);
     const [selectedSong, setSelectedSong] = useState("Happy");
     const [selectedTime, setSelectedTime] = useState("5 minutes");
 
     const people = [ { name: "Jane", image: face1 }, { name: "Mike", image: face2 }, { name: "Stacy", image: face3 }, { name: "Sarah", image: face4 }, { name: "Bob", image: face5 } ];
+    const songs = ["Happy","Sad","Angry","Calm"];
     const times = ["30 seconds", "1 minute", "5 minutes"];
 
     const openPreview = () => setPreviewOpen(true);
@@ -41,6 +41,7 @@ export default function Library() {
 
     const handleSubmit = async () => {
         openPreview();
+        alert("handling submit")
         //API CALL HERE
     };
 
