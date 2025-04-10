@@ -40,9 +40,7 @@ export default function AllStyles() {
                 </div>
                 <div className="container">
                     <div className="topbar">
-                    <div className="topbar">
                         <button className="logout" onClick={handleLogout}>Log Out</button>
-                    </div>
                     </div>
                     <div className="media_block">
                         {activeTab === "library" && <Library />}
