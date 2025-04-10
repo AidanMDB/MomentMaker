@@ -62,13 +62,13 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
                 try {
                     await uploadData({
-                        path: `user-media/moments/${result}`,
+                        path: `user-media/${userID}/moments/${result}`,
                         data: file,
                         options: {
                             bucket: 'MediaStorage',
                             metadata: {
                                 fileType: `video/mp4`,
-                                userID: `user1`
+                                userID: userID
                             }
                         }
                     });
