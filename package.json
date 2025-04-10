@@ -11,6 +11,7 @@
     "test": "jest --coverage --coverageDirectory=/dev/null --passWithNoTests"
   },
   "dependencies": {
+    "@aws-amplify/data-construct": "^1.15.1",
     "@aws-amplify/storage": "^6.7.11",
     "@aws-amplify/ui-react": "^6.9.5",
     "@aws-amplify/ui-react-storage": "^3.7.2",
@@ -32,8 +33,8 @@
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "aws-cdk": "^2.138.0",
-    "aws-cdk-lib": "^2.138.0",
+    "aws-cdk": "^2.1007.0",
+    "aws-cdk-lib": "^2.163.1",
     "constructs": "^10.3.0",
     "esbuild": "^0.20.2",
     "eslint": "^8.57.0",
