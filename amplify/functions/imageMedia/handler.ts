@@ -1,5 +1,5 @@
-import { RekognitionClient, DetectFacesCommand, CompareFacesCommand} from "@aws-sdk/client-rekognition";
-import { S3Client, HeadObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { RekognitionClient, DetectFacesCommand, CompareFacesCommand, FaceDetail} from "@aws-sdk/client-rekognition";
+import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { Handler } from "aws-lambda";
 import sharp from "sharp";
@@ -56,7 +56,7 @@ async function getS3Image() {
  * @param detectedFaces - Array of detected faces from Rekognition.
  * @returns buffers of cropped faces
  */
-async function cropFaces(detectedFaces: any[]) {
+async function cropFaces(detectedFaces: FaceDetail[]) {
     console.log(`Cropping faces`);
     const imageBody = await getS3Image();
     const image = sharp(imageBody);
@@ -64,13 +64,19 @@ async function cropFaces(detectedFaces: any[]) {
 
     const faceBuffers = [];
     for (let i = 0; i < detectedFaces.length; i++) {
-        const {Height, Left, Top, Width} = detectedFaces[i].BoundingBox;
+        const boundingBox = detectedFaces[i].BoundingBox;
         
+        // skip if no bounding box
+        if (!boundingBox) {
+            console.log(`No bounding box for face ${i}`);
+            continue; 
+        }
+
         const cropParams = {
-            left: Math.round(Left * imageMetadata.width!),
-            top: Math.round(Top * imageMetadata.height!),
-            width: Math.round(Width * imageMetadata.width!),
-            height: Math.round(Height * imageMetadata.height!),
+            left: Math.round((boundingBox.Left || 0) * imageMetadata.width!),
+            top: Math.round((boundingBox.Top || 0) * imageMetadata.height!),
+            width: Math.round((boundingBox.Width || 0) * imageMetadata.width!),
+            height: Math.round((boundingBox.Height || 0) * imageMetadata.height!),
         }
         const croppedImage = await image.extract(cropParams).toBuffer();
         faceBuffers.push(croppedImage);
@@ -236,7 +242,7 @@ async function analyzeImage() {
 
     for (const faceBuffer of faceBuffers) {
         let isUnique = true;
-        let storedFace;
+        //let storedFace;
         for (const storedFace in storedFaces) {
             const match = await compareFaces(faceBuffer, storedFace);
             if (match.length) {

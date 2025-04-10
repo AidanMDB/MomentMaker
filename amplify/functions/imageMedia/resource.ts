@@ -1,5 +1,5 @@
 import { defineFunction } from "@aws-amplify/backend";
-import { data } from "../../data/resource";
+//import { data } from "../../data/resource";
 
 export const imageAnalyzer = defineFunction({
     name: 'ImageMediaUpload',         

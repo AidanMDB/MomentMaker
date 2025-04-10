@@ -1,6 +1,6 @@
 import { S3Handler } from 'aws-lambda';
-import { LambdaClient, InvokeCommand, InvocationType, ListFunctionsCommand } from '@aws-sdk/client-lambda';
-import { imageAnalyzer } from '../imageMedia/resource';
+import { LambdaClient, InvokeCommand, InvocationType } from '@aws-sdk/client-lambda';
+//import { imageAnalyzer } from '../imageMedia/resource';
 
 
 const lambdaClient = new LambdaClient({ region: 'us-east-1' });

@@ -1,6 +1,6 @@
-import { RekognitionClient, StartFaceDetectionCommand, GetFaceDetectionCommand } from '@aws-sdk/client-rekognition';
+import { RekognitionClient, StartFaceDetectionCommand } from '@aws-sdk/client-rekognition';
 import { Handler } from 'aws-lambda';
-import { v4 as uuidv4 } from 'uuid';
+//import { v4 as uuidv4 } from 'uuid';
 
 const rekogClient = new RekognitionClient();
 

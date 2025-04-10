@@ -12,7 +12,7 @@ import { EventType } from 'aws-cdk-lib/aws-s3';
 import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications';
 import { PolicyStatement, ServicePrincipal, Role } from 'aws-cdk-lib/aws-iam';
 import * as sns from 'aws-cdk-lib/aws-sns';
-import * as rekognition from 'aws-cdk-lib/aws-rekognition';
+//import * as rekognition from 'aws-cdk-lib/aws-rekognition';
 //import { Policy, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 
 

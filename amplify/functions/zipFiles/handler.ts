@@ -5,7 +5,7 @@ import { Readable } from "stream";
 import { v4 as uuidv4 } from "uuid";
 
 const s3Client = new S3Client();
-const allowedFileTypes = ['.jpg', '.jpeg', '.png', '.mp4'];
+//const allowedFileTypes = ['.jpg', '.jpeg', '.png', '.mp4'];
 const userID = "user1";
 
 async function streamToBuffer(stream: Readable): Promise<Buffer> {
@@ -31,7 +31,7 @@ async function getS3Object(bucket: string, key: string) {
     };
     const command = new GetObjectCommand(params);
     const response = await s3Client.send(command);
-    return streamToBuffer(response.Body as any);
+    return streamToBuffer(response.Body as Readable);
 }
 
 async function uploadToS3(key: string, body: Buffer) {
@@ -61,19 +61,19 @@ export const handler: Handler = async (event) => {
         const fileName = zipEntry.entryName;
         const fileExtension = fileName.split('.').pop();
         
-        if (fileExtension === 'jpg' || 'jpeg' || 'png') {
+        if (fileExtension === 'jpg' || fileExtension === 'jpeg' || fileExtension === 'png') {
             const fileBuffer = zipEntry.getData();
             const newKey = `user-media/${userID}/image/${uuidv4()}.${fileExtension}`;
             await uploadToS3(newKey, fileBuffer);
             console.log(`Uploaded image: ${newKey}`);
         }
-        else if (fileExtension === 'mp4' || 'mov' || 'avi' || 'mkv') {
+        else if (fileExtension === 'mp4' || fileExtension === 'mov' || fileExtension === 'avi' || fileExtension === 'mkv') {
             const fileBuffer = zipEntry.getData();
             const newKey = `user-media/${userID}/video/${uuidv4()}.${fileExtension}`;
             await uploadToS3(newKey, fileBuffer);
             console.log(`Uploaded video: ${newKey}`);
         }
-        else if (fileExtension === 'mp3' || 'mpeg') {
+        else if (fileExtension === 'mp3' || fileExtension === 'mpeg') {
             const fileBuffer = zipEntry.getData();
             const newKey = `user-media/${userID}/audio/${uuidv4()}.${fileExtension}`;
             await uploadToS3(newKey, fileBuffer);
