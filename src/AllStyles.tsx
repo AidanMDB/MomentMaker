@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import icon from "./assets/MomentMakerIcon.ico"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { signOut } from 'aws-amplify/auth';
 import "./AllStyles.css"
 
@@ -11,6 +11,15 @@ export default function AllStyles() {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState("library");
+    
+    const location = useLocation();
+
+    useEffect(() => {
+        let activeTab = location.state?.activeTab;
+        if (activeTab !== undefined) {
+            setActiveTab(activeTab);
+        }
+    }, [location.state]);
 
     const handleLogout = async () => {
         try {

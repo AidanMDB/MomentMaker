@@ -1,5 +1,6 @@
 import './PreviewMoment.css';
 import "./AllStyles.css"
+import { useNavigate } from "react-router-dom"
 import demo_video from "/RPReplay_Final1741140628.mp4"
 
 interface ModalProps {
@@ -9,8 +10,10 @@ interface ModalProps {
   onSave: () => void;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {  
   if (!isOpen) return null;
+
+  const navigate = useNavigate();
 
   const handleRedo = () => {
     onRedo(); 
@@ -20,6 +23,9 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
   const handleSave = () => {
     onSave();
     onClose();
+    navigate("/all", {
+      state: { activeTab: "library" }
+    });
   };
 
   return (
