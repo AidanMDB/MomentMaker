@@ -268,7 +268,7 @@ export const handler: Handler = async (event) => {
     //const payload = JSON.parse(event);
     objectKey = event.key;
     bucketName = event.bucket;
-    userID = "user1"; // replace with call to user's ID from Cognito or other auth service
+    userID = event.userId;
     console.log(`Analyzing ${objectKey} in ${bucketName}`);
     await analyzeImage();
 };
