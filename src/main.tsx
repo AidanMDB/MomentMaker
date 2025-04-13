@@ -7,6 +7,7 @@ import LogIn from "./LogIn.tsx";
 import AllStyles from "./AllStyles.tsx";
 import Library from "./Library.tsx";
 import CreateAMoment from "./CreateMoment.tsx";
+import SocialMedia from "./SocialMedia.tsx";
 import { Amplify } from "aws-amplify";
 import outputs from "../amplify_outputs.json";
 
@@ -23,6 +24,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/all" element={<ProtectedRoute element={<AllStyles />} />} />
         <Route path="/library" element={<ProtectedRoute element={<Library />} />} />
         <Route path="/createamoment" element={<ProtectedRoute element={<CreateAMoment />} />} />
+        <Route path="/socialmedia" element={<ProtectedRoute element={<SocialMedia />} />} />
         <Route path="*" element={<Navigate to="/home" />} />
       </Routes>
     </Router>

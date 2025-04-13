@@ -6,6 +6,7 @@ import "./AllStyles.css"
 
 import Library from "./Library"
 import CreateAMoment from "./CreateMoment"
+import SocialMedia from "./SocialMedia";
 
 export default function AllStyles() {
     const navigate = useNavigate();
@@ -36,6 +37,9 @@ export default function AllStyles() {
                         <button className={`side_bar-tab ${activeTab === "createamoment" ? "active" : ""}`} onClick={() => setActiveTab("createamoment")}>
                             Create A Moment
                         </button>
+                        <button className={`side_bar-tab ${activeTab === "socialmedia" ? "active" : ""}`} onClick={() => setActiveTab("socialmedia")}>
+                            Social Moments
+                        </button>
                     </div>
                 </div>
                 <div className="container">
@@ -45,6 +49,7 @@ export default function AllStyles() {
                     <div className="media_block">
                         {activeTab === "library" && <Library />}
                         {activeTab === "createamoment" && <CreateAMoment />}
+                        {activeTab === "socialmedia" && <SocialMedia />}
                     </div>
                 </div>
             </div>

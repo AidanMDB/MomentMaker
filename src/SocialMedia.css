@@ -1,0 +1,13 @@
+.search_bar {
+    width: 100%;
+    height: auto;
+    background-color: var(--light-gray);
+}
+
+.search_box {
+    background: var(--light-gray);
+}
+
+.search_icon {
+    background: var(--light-gray);
+}
