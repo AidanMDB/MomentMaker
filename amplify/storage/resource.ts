@@ -7,5 +7,4 @@ export const storage = defineStorage({
             allow.authenticated.to(['read', 'write', 'delete']),
         ],
     }),
-
 });
