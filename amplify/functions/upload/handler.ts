@@ -53,18 +53,18 @@ export const handler: S3Handler = async (event) => {
         if (objectKey.startsWith('user-media/') && objectKey.includes('/image/')) 
         {
             console.log(`Image upload detected: ${objectKey}`);
-            const response = invokeLambdaFunction(process.env.IMAGE_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
-            console.log(`Response: ${response}\n${process.env.IMAGE_ANALYZER_FUNCTION_NAME} \n Function invoked for image upload`);
+            const response = await invokeLambdaFunction(process.env.IMAGE_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
+            console.log(`Image uploaded to: ${objectKey}\nInvoke Response ${response}`);
         }
         else if (objectKey.startsWith('user-media/') && objectKey.includes('/video/')) 
         {
-            const response = invokeLambdaFunction(process.env.VIDEO_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
-            console.log(`Video uploaded to: ${objectKey}`);
+            const response = await invokeLambdaFunction(process.env.VIDEO_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
+            console.log(`Video uploaded to: ${objectKey}\nInvoke Response ${response}`);
         }
         else if (objectKey.startsWith('user-media/') && objectKey.includes('/zip/')) 
         {
-            const response = invokeLambdaFunction(process.env.ZIP_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
-            console.log(`Zip file uploaded to: ${objectKey}`);
+            const response = await invokeLambdaFunction(process.env.ZIP_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
+            console.log(`Zip file uploaded to: ${objectKey}\nInvoke Response ${response}`);
         }
 
         console.log(`${objectKey} in ${currentBucketName}`);
