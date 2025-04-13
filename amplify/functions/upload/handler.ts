@@ -43,18 +43,25 @@ export const handler: S3Handler = async (event) => {
     // loop through all the uploaded media and determine which lambda function to invoke based on the prefix of the key
     for (const objectKey of objectKeys) {
 
-        if (objectKey.startsWith('user-media/image/')) 
+        if (objectKey.startsWith('user-media/') && objectKey.includes('/faces/')) 
+        {
+            console.log('Ignore Face Directory');
+            continue; // Skip processing for face directory    
+        }
+
+        
+        if (objectKey.startsWith('user-media/') && objectKey.includes('/image/')) 
         {
             console.log(`Image upload detected: ${objectKey}`);
             const response = invokeLambdaFunction(process.env.IMAGE_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
             console.log(`Response: ${response}\n${process.env.IMAGE_ANALYZER_FUNCTION_NAME} \n Function invoked for image upload`);
         }
-        else if (objectKey.startsWith('user-media/video/')) 
+        else if (objectKey.startsWith('user-media/') && objectKey.includes('/video/')) 
         {
             const response = invokeLambdaFunction(process.env.VIDEO_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
             console.log(`Video uploaded to: ${objectKey}`);
         }
-        else if (objectKey.startsWith('user-media/zip/')) 
+        else if (objectKey.startsWith('user-media/') && objectKey.includes('/zip/')) 
         {
             const response = invokeLambdaFunction(process.env.ZIP_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
             console.log(`Zip file uploaded to: ${objectKey}`);
