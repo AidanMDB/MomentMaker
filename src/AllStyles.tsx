@@ -15,7 +15,7 @@ export default function AllStyles() {
     const location = useLocation();
 
     useEffect(() => {
-        let activeTab = location.state?.activeTab;
+        const activeTab = location.state?.activeTab;
         if (activeTab !== undefined) {
             setActiveTab(activeTab);
         }
