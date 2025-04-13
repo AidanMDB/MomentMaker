@@ -11,9 +11,9 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {  
-  if (!isOpen) return null;
-
   const navigate = useNavigate();
+
+  if (!isOpen) return null;
 
   const handleRedo = () => {
     onRedo(); 
