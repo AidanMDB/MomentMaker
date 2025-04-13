@@ -34,6 +34,11 @@ async function getS3Object(bucket: string, key: string) {
     return streamToBuffer(response.Body as Readable);
 }
 
+/**
+ * Uploads a file to S3
+ * @param key - S3 object key
+ * @param body - File content as Buffer
+ */
 async function uploadToS3(key: string, body: Buffer) {
     const params = {
         Bucket: process.env.BUCKET_NAME,
