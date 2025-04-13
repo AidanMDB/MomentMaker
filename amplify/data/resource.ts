@@ -16,7 +16,8 @@ const schema = a.schema({
   FaceLocations: a.model({
     userID: a.id().required(),
     faceID: a.string().required(),
-    imageLocations: a.string().array()
+    imageLocations: a.string().array(),
+    videoLocations: a.string().array(),
   })
   .identifier(["userID", "faceID"])
   .authorization((allow) => [allow.publicApiKey()])

@@ -1,9 +1,10 @@
 import { SNSHandler, SNSEvent } from 'aws-lambda';
-import { RekognitionClient, DetectFacesCommand, CompareFacesCommand, FaceDetail} from "@aws-sdk/client-rekognition";
+import { RekognitionClient, GetFaceDetectionCommand, CompareFacesCommand, FaceDetail} from "@aws-sdk/client-rekognition";
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
+import { get } from 'aws-amplify/api';
 
 const rekogClient = new RekognitionClient({region: 'us-east-1'});
 const s3Client = new S3Client({region: 'us-east-1'});
@@ -271,14 +272,26 @@ async function analyzeImage() {
 
 
 
-
+async function getVideoFaces(jobID: string) {
+    console.log(`Getting video faces from Rekognition`);
+    const params = {
+        JobId: process.env.JOB_ID,
+        MaxResults: 10,
+        NextToken: undefined
+    };
+    const command = new GetFaceDetectionCommand(params);
+    const response = await rekogClient.send(command);
+    return response.FaceDetections || [];
+}
 
 
 
 export const handler: SNSHandler = async (event: SNSEvent) => {
     for (const record of event.Records) {
+        const message = record.Sns.Message;
+        if (message)
         console.log(`Received message: ${record.Sns.Message}`);
-
+        getVideoFaces(record.Sns)
     }
 };
 
