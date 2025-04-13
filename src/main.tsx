@@ -1,7 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import ProtectedRoute from "./ProtectedRoute.tsx";
 import Home from "./Home.tsx";
+import LogIn from "./LogIn.tsx";
 import AllStyles from "./AllStyles.tsx";
 import Library from "./Library.tsx";
 import CreateAMoment from "./CreateMoment.tsx";
@@ -17,9 +19,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/all" element={<AllStyles />} />
-        <Route path="/library" element={<Library />} />
-        <Route path="/createamoment" element={<CreateAMoment />} />
+        <Route path="/login" element={<LogIn />} />
+        <Route path="/all" element={<ProtectedRoute element={<AllStyles />} />} />
+        <Route path="/library" element={<ProtectedRoute element={<Library />} />} />
+        <Route path="/createamoment" element={<ProtectedRoute element={<CreateAMoment />} />} />
+        <Route path="*" element={<Navigate to="/home" />} />
       </Routes>
     </Router>
   </React.StrictMode>

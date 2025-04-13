@@ -1,6 +1,7 @@
 import { useState } from "react";
 import icon from "./assets/MomentMakerIcon.ico"
 import { useNavigate } from "react-router-dom"
+import { signOut } from 'aws-amplify/auth';
 import "./AllStyles.css"
 
 import Library from "./Library"
@@ -9,7 +10,16 @@ import CreateAMoment from "./CreateMoment"
 export default function AllStyles() {
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState("Home");
+    const [activeTab, setActiveTab] = useState("library");
+
+    const handleLogout = async () => {
+        try {
+            await signOut();
+            navigate("/home");
+        } catch (error) {
+            console.error("Error signing out: ", error);
+        }
+    };
 
     return (
         <main>
@@ -30,7 +40,7 @@ export default function AllStyles() {
                 </div>
                 <div className="container">
                     <div className="topbar">
-                        <button className="logout" onClick={() => navigate("/home")}>Log Out</button>
+                        <button className="logout" onClick={handleLogout}>Log Out</button>
                     </div>
                     <div className="media_block">
                         {activeTab === "library" && <Library />}
