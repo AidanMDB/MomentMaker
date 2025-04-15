@@ -41,8 +41,27 @@ export default function Library() {
 
     const handleSubmit = async () => {
         openPreview();
-        alert("handling submit")
-        //API CALL HERE
+        //API CALL 
+        //change this to the actual lambda when merged
+        const url = `https://oww7phtdo4nqxpfsftccvdj6rm0fnils.lambda-url.us-east-1.on.aws/?userID=${userID}`;
+
+        try {
+            // Send a GET request to the Lambda function URL with the query string
+            const response = await fetch(url);
+            alert("fetching url")
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Lambda response:', data);
+                alert("Lambda response: " + data);
+            } else {
+                console.error('Lambda request failed:', response.statusText);
+                alert("Lambda request failed: " + response.statusText);
+            }
+        } catch (error) {
+            console.error('Error calling Lambda:', error);
+            alert("Error calling Lambda: " + error);
+        }
+
     };
 
     const handleRedo = () => {

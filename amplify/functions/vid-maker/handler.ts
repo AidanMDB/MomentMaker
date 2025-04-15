@@ -1,158 +1,234 @@
 import { spawn } from "child_process";
-import { S3Client, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { uploadData } from 'aws-amplify/storage';
+import { uploadData } from "aws-amplify/storage";
 import fs from "fs";
 import { join, basename } from "path";
 import { pipeline } from "stream";
 import { promisify } from "util";
+import * as path from "path";
+import { randomUUID } from "crypto";
+
+const ffmpeg = require("fluent-ffmpeg");
+ffmpeg.setFfmpegPath("/opt/ffmpeglib/ffmpeg"); // For Lambda Layer or bundled binary
+
+const TMP_DIR = "/tmp";
+const IMAGE_DURATION = 4;
+const SUPPORTED_VIDEO_EXT = [".mp4", ".avi", ".mov", ".mkv"];
+const SUPPORTED_IMAGE_EXT = [".jpg", ".jpeg", ".png", ".gif"];
 
 const pipe = promisify(pipeline);
-
 const s3Client = new S3Client({ region: "us-east-1" });
-
-const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
+const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fdhfxhm7qwnv";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
-    console.log("Received event:", JSON.stringify(event, null, 2));
-
-    const userID = event.queryStringParameters?.userID;
-    // const faceID = event.queryStringParameters?.faceID;
-
-    if (!userID) {
+    console.log("Handler invoked");
+    if (event.httpMethod === 'OPTIONS') {
+        console.log("OPTIONS request received");
         return {
-            statusCode: 400,
-            body: JSON.stringify({ error: "Missing userID parameter" }),
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
+            body: '',
         };
     }
 
-    // if (!faceID) {
-    //     return {
-    //         statusCode: 400,
-    //         body: JSON.stringify({ error: "Missing faceID parameter" }),
-    //     };
-    // }
+    console.log("Received event:", JSON.stringify(event, null, 2));
 
-    const downloadedFiles = await downloadAllMediaFromS3(userID);
-
-    return new Promise((resolve, reject) => {
-        const pythonProcess = spawn('python', ['movie_funcs.py', ...downloadedFiles]);
-
-        let result = '';
-        pythonProcess.stdout.on('data', (data) => {
-            result += data.toString();
-        });
-
-        pythonProcess.stderr.on('data', (data) => {
-            console.error(`Error: ${data}`);
-        });
-
-        pythonProcess.on('close', async (code) => {
-            if (code !== 0) {
-                return reject({ statusCode: 500, body: `Python script exited with code ${code}` });
-            }
-
-            let file: Buffer | null = null;
-            if (result.length > 0) {
-                file = readVideoFile(result);
-                if (!file) {
-                    console.error("Error reading video file:", result);
-                    return reject({ statusCode: 500, body: "Error reading final moment video file" });
-                }
-
-                try {
-                    await uploadData({
-                        path: `user-media/${userID}/moments/${result}`,
-                        data: file,
-                        options: {
-                            bucket: 'MediaStorage',
-                            metadata: {
-                                fileType: `video/mp4`,
-                                userID: userID
-                            }
-                        }
-                    });
-
-                    console.log("Moment uploaded to S3 successfully!");
-                } catch (error) {
-                    console.log("Error uploading moment to S3:", error);
-                    return reject({ statusCode: 500, body: "Error uploading moment to S3" });
-                }
-            }
-
-            try {
-                const directoryPath = "./";
-                const files = fs.readdirSync(directoryPath);
-
-                files.forEach((file) => {
-                    if (file.endsWith(".png") || file.endsWith(".mp4") || file.endsWith(".jpg") || file.endsWith(".jpeg") || file.endsWith(".mp3") || file.endsWith(".mpeg")) {
-                        const filePath = join(directoryPath, file);
-                        fs.unlinkSync(filePath);
-                        console.log(`Deleted file: ${filePath}`);
-                    }
-                });
-            } catch (error) {
-                console.error("Error deleting files:", error);
-                return reject({ statusCode: 500, body: "Error deleting temporary files" });
-            }
-            
-            resolve({ statusCode: 200, body: result });
-        });
-    });
-};
-
-function readVideoFile(filePath: string): Buffer | null {
-    try {
-        const data = fs.readFileSync(filePath);
-        console.log(`Video file read: ${filePath}`);
-        return data;
-    } catch (error) {
-        console.error(`Error reading video file: ${error}`);
-        return null;
+    const userID = event.queryStringParameters?.userID;
+    if (!userID) {
+        console.error("Missing userID parameter");
+        return { statusCode: 400, body: JSON.stringify({ error: "Missing userID parameter" }) };
     }
-}
 
-/**
- * Downloads all media files from an S3 bucket to a specified local directory.
- * @param bucketName - The name of the S3 bucket.
- * @param localSavePath - The local directory where files will be saved.
- */
-export async function downloadAllMediaFromS3(userID: string): Promise<string[]> {
-    const downloadedFiles: string[] = [];
     try {
-        // List all objects in the bucket
-        const listCommand = new ListObjectsV2Command({ Bucket: BUCKET_NAME, Prefix: `user-media/${userID}/` });
-        const listResponse = await s3Client.send(listCommand);
-    
-        if (!listResponse.Contents) {
-            console.log("No files found in the bucket.");
-            return downloadedFiles;
+        console.log("Downloading all media for userID:", userID);
+        const downloadedFiles = await downloadAllMediaFromS3(userID);
+        if (downloadedFiles.length === 0) {
+            console.warn("No media files found for userID:", userID);
+            return { statusCode: 404, body: JSON.stringify({ error: "No media files found" }) };
+        }
+        console.log("Downloaded files:", downloadedFiles);
+
+        console.log("Processing downloaded files...");
+        const processedFiles = await handleFiles(downloadedFiles);
+        console.log("Processed files:", processedFiles);
+
+        console.log("Merging media files...");
+        const finalPath = await mergeMedia(processedFiles, `final_video_${randomUUID()}.mp4`);
+        console.log("Merged video path:", finalPath);
+
+        const finalFullPath = path.join(TMP_DIR, finalPath);
+        const videoBuffer = fs.readFileSync(finalFullPath);
+
+        try {
+            console.log("Uploading final video to S3...");
+            const command = new PutObjectCommand({
+                Bucket: BUCKET_NAME,
+                Key: `user-media/${userID}/moments/${finalPath}`,
+                Body: videoBuffer,
+                ContentType: 'video/mp4',
+                Metadata: {
+                    fileType: 'video/mp4',
+                    userID: userID,
+                },
+            });
+
+            await s3Client.send(command);
+            console.log(`Uploaded video to S3: ${finalPath}`);
+        } catch (error) {
+            console.error("Error uploading video to S3:", error);
+            return { statusCode: 500, body: JSON.stringify({ error: "Failed to upload video" }) };
         }
 
-        for (const file of listResponse.Contents) {
-            if (!file.Key) continue; // Skip if the key is undefined
-    
-            console.log(`Downloading: ${file.Key}`);
+        return { statusCode: 200, body: JSON.stringify({ message: "Video created", file: finalPath }) };
+    } catch (error) {
+        console.error("Error processing video:", error);
+        return { statusCode: 500, body: JSON.stringify({ error: "Internal Server Error" }) };
+    }
+};
 
-            const fileName = basename(file.Key); // Get only the file name (remove any folder structure)
-            const filePath = join("./", fileName); 
-    
-            // Get the file from S3
-            const getCommand = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: file.Key });
-            const { Body } = await s3Client.send(getCommand);
-    
-            if (Body) {
-                const writeStream = fs.createWriteStream(filePath);
-                await pipe(Body as NodeJS.ReadableStream, writeStream);
-                console.log(`Saved: ${filePath}`);
-                downloadedFiles.push(fileName); // Add the file name to the array
+function isVideo(file: string) {
+    const result = SUPPORTED_VIDEO_EXT.includes(path.extname(file).toLowerCase());
+    console.log(`isVideo check for file: ${file}, result: ${result}`);
+    return result;
+}
+
+function isImage(file: string) {
+    const result = SUPPORTED_IMAGE_EXT.includes(path.extname(file).toLowerCase());
+    console.log(`isImage check for file: ${file}, result: ${result}`);
+    return result;
+}
+
+function parseVideo(inputPath: string, outputPath: string, start: number, end: number): Promise<string> {
+    console.log(`Parsing video: inputPath=${inputPath}, outputPath=${outputPath}, start=${start}, end=${end}`);
+    return new Promise((resolve, reject) => {
+        ffmpeg(path.join(TMP_DIR, inputPath))
+            .setStartTime(start)
+            .setDuration(end - start)
+            .output(path.join(TMP_DIR, outputPath))
+            .on("end", () => {
+                console.log(`Video parsed successfully: ${outputPath}`);
+                resolve(outputPath);
+            })
+            .on("error", (error: Error) => {
+                console.error("Error parsing video:", error);
+                reject(error);
+            })
+            .run();
+    });
+}
+
+function convertImageToVideo(imagePath: string, outputPath: string, duration = IMAGE_DURATION): Promise<string> {
+    console.log(`Converting image to video: imagePath=${imagePath}, outputPath=${outputPath}, duration=${duration}`);
+    return new Promise((resolve, reject) => {
+        ffmpeg(path.join(TMP_DIR, imagePath))
+            .loop(duration)
+            .outputOptions(["-t " + duration, "-r 24"])
+            .output(path.join(TMP_DIR, outputPath))
+            .on("end", () => {
+                console.log(`Image converted to video successfully: ${outputPath}`);
+                resolve(outputPath);
+            })
+            .on("error", (error: Error) => {
+                console.error("Error converting image to video:", error);
+                reject(error);
+            })
+            .run();
+    });
+}
+
+async function handleFiles(fileList: string[]): Promise<string[]> {
+    console.log("Handling files:", fileList);
+    const processedFiles: string[] = [];
+
+    for (const file of fileList) {
+        if (isVideo(file)) {
+            const trimmedName = `trimmed_${file}`;
+            console.log(`Trimming video: ${file}`);
+            await parseVideo(file, trimmedName, 10, 30);
+            processedFiles.push(trimmedName);
+        } else if (isImage(file)) {
+            const imageVidName = `image_${randomUUID()}.mp4`;
+            console.log(`Converting image to video: ${file}`);
+            await convertImageToVideo(file, imageVidName);
+            processedFiles.push(imageVidName);
+        } else {
+            console.log(`Skipping unsupported file: ${file}`);
+        }
+    }
+
+    console.log("Processed files (shuffled):", processedFiles);
+    return processedFiles.sort(() => Math.random() - 0.5);
+}
+
+function mergeMedia(clips: string[], outputPath: string): Promise<string> {
+    console.log("Merging media clips:", clips);
+    return new Promise((resolve, reject) => {
+        const tempListFile = path.join(TMP_DIR, "input.txt");
+        fs.writeFileSync(tempListFile, clips.map(f => `file '${path.join(TMP_DIR, f)}'`).join("\n"));
+
+        const durationLimit = 300; //5 minutes in seconds
+
+        ffmpeg()
+            .input(tempListFile)
+            .inputOptions(["-f", "concat", "-safe", "0"])
+            .outputOptions(['-preset', 'ultrafast', '-t', `${durationLimit}`])
+            .output(path.join(TMP_DIR, outputPath))
+            .on("end", () => {
+                console.log(`Media merged successfully: ${outputPath}`);
+                resolve(outputPath);
+            })
+            .on("error", (error: Error) => {
+                console.error("Error merging media:", error);
+                reject(error);
+            })
+            .run();
+    });
+}
+
+export async function downloadAllMediaFromS3(userID: string): Promise<string[]> {
+    console.log("Downloading all media from S3 for userID:", userID);
+    const downloadedFiles: string[] = [];
+    const prefixes = [`user-media/${userID}/image/`, `user-media/${userID}/video/`];
+
+    try {
+        for (const prefix of prefixes) {
+            console.log(`Listing objects with prefix: ${prefix}`);
+            const listCommand = new ListObjectsV2Command({ Bucket: BUCKET_NAME, Prefix: prefix });
+            const listResponse = await s3Client.send(listCommand);
+
+            if (!listResponse.Contents) {
+                console.log(`No files found in the bucket for prefix: ${prefix}`);
+                continue;
+            }
+
+            for (const file of listResponse.Contents) {
+                if (!file.Key) continue;
+
+                console.log(`Downloading: ${file.Key}`);
+                const fileName = basename(file.Key);
+                const filePath = join(TMP_DIR, fileName);
+
+                const getCommand = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: file.Key });
+                const { Body } = await s3Client.send(getCommand);
+
+                if (Body) {
+                    const writeStream = fs.createWriteStream(filePath);
+                    await pipe(Body as NodeJS.ReadableStream, writeStream);
+                    console.log(`Saved: ${filePath}`);
+                    downloadedFiles.push(fileName);
+                }
             }
         }
     } catch (error) {
         console.error("Error downloading files:", error);
+        return [];
     }
+
+    console.log("Downloaded files:", downloadedFiles);
     return downloadedFiles;
 }
-  
-
-

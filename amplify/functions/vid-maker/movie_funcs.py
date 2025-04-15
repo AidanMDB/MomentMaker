@@ -28,9 +28,9 @@ def merge_media(media_files, output_path, image_duration=3):
 
     for file in media_files:
         if file.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):  # Video file
-            clip = VideoFileClip(file)
+            clip = VideoFileClip(f"tmp/{file}")
         elif file.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):  # Image file
-            clip = ImageClip(file, duration=image_duration).set_fps(24)
+            clip = ImageClip(f"tmp/{file}", duration=image_duration).set_fps(24)
         else:
             print(f"Skipping unsupported file: {file}")
             continue
@@ -47,7 +47,7 @@ def merge_media(media_files, output_path, image_duration=3):
         final_video = final_video.subclip(0, 300)
 
     # Export the final video
-    final_video.write_videofile(output_path, codec="libx264", fps=24)
+    final_video.write_videofile(f"tmp/{output_path}", codec="libx264", fps=24)
 
     return output_path
 
@@ -82,7 +82,7 @@ def handle_files(file_list):
         file = file_list[index]
         if file.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
             print(f"Processing video: {file}")
-            parse_video(file, f"trimmed_{file}", 10, 30) # change this to be the times that are passed in from the recignition software
+            parse_video(f"tmp/{file}", f"tmp/trimmed_{file}", 10, 30) # change this to be the times that are passed in from the recignition software
             file_list[index] = f"trimmed_{file}"
 
     return file_list
