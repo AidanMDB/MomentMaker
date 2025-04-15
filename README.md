@@ -45,9 +45,13 @@ To access the website go to URL:  [https://main.d1mzyzgpuskuft.amplifyapp.com/al
 ## Resources
 
 - **Front End**: React
-- **Database**: Amazon S3 Buckets and Amazon DynamoDB
-- **Authentication**: Amazon Cognito
-- **API**: Amazon Lambda Function
+- **Storage**: AWS Simple Storage Service (S3)
+- **Database**: AWS DynamoDB
+- **Authentication**: AWS Cognito
+- **API**: AWS API Gateway
+- **AI Face Detection**: AWS Rekognition
+- **Compute**: AWS Lambda Funciton's
+- **
 - EVERYONE ADD WHAT YOU USED
 
 ## Developers
