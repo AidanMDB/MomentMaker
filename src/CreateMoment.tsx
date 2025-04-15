@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getCurrentUser } from 'aws-amplify/auth';
 import PreviewMoment from './PreviewMoment'
+import { list, remove } from 'aws-amplify/storage';
 import PersonIdCheckbox from "./PersonIdCheckbox.tsx";
 import "./AllStyles.css"
 import "./CreateMoment.css"
@@ -60,6 +61,27 @@ export default function Library() {
         }
     }
 
+    const handleDeleteMoment = async () => {
+        try {
+            const { items: videoResults } = await list({ path: `user-media/${userID}/moments/` });
+    
+            if (!videoResults.length) {
+                return;
+            }
+    
+            const sortedVideos = videoResults
+                .filter(file => file?.lastModified)
+                .sort((a, b) =>
+                  new Date(b?.lastModified ?? 0).getTime() - new Date(a?.lastModified ?? 0).getTime()
+                );
+                
+            const latestVideo = sortedVideos[0];
+            await remove({ path: latestVideo.path });
+        } catch (error) {
+            console.error("Error removing latest moment:", error);
+        }
+    }
+
     const handleSubmit = async () => {
         setIsLoading(true);
         try {
@@ -73,8 +95,10 @@ export default function Library() {
     };
 
     const handleRedo = async () => {
+        closePreview();
         setIsLoading(true);
         try {
+            await handleDeleteMoment();
             await createVideo();
         } catch (err) {
             alert("Creating Moment failed:");
