@@ -41,6 +41,11 @@
     cursor: default;
 }
 
+.right_buttons {
+    margin-left: auto;
+    display: flex;
+}
+
 .upload_button {
     font-size: 30px;
     color: var(--light-purple);
@@ -48,10 +53,19 @@
     border: none;
     padding-top: 5px;
     cursor: pointer;
-    display: flex;
     align-items: center;
     padding-right: 5px;
-    margin-left: auto;
+}
+
+.delete_button {
+    font-size: 30px;
+    color: var(--light-purple);
+    background: transparent;
+    border: none;
+    padding-top: 6px;
+    cursor: pointer;
+    align-items: center;
+    padding-right: 15px;
 }
 
 .media_grid {

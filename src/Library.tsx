@@ -111,6 +111,10 @@ export default function Library() {
         }
       };
 
+    const handleDeleteClick = () => {
+        alert("DELETE CLICKED")
+    }
+
     //HTML
     return (
         <div className="media_container">
@@ -122,15 +126,20 @@ export default function Library() {
                 <span className={`media_clickable_word ${activeTab === 'Songs' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Songs')}> Songs </span>
                 <span className="media_bar"> | </span>
                 <span className={`media_clickable_word ${activeTab === 'Moments' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Moments')}> Moments </span>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    style={{ display: "none" }}
-                    onChange={handleFileChange}
-                />
-                <button className="upload_button" onClick={handleUploadClick}>
-                    <i className="fas fa-upload"></i>
-                </button>
+                <div className="right_buttons">
+                    <button className="delete_button" onClick={handleDeleteClick}>
+                        <i className="fas fa-trash"></i>
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        style={{ display: "none" }}
+                        onChange={handleFileChange}
+                    />
+                    <button className="upload_button" onClick={handleUploadClick}>
+                        <i className="fas fa-upload"></i>
+                    </button>
+                </div>
             </div> 
             <div className="media_grid">
             {activeTab === "Photos" && (
