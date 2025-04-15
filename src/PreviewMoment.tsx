@@ -16,7 +16,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
   if (!isOpen) return null;
 
   const [userID, setUserID] = useState<string | null>(null);
-  const [moment, setMoment] = useState<URL[]>([]);
+  const [moment, setMoment] = useState<string | undefined>(undefined);
 
   const handleRedo = () => {
     onRedo(); 
@@ -47,7 +47,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
         const { items: videoResults } = await list({ path: `user-media/${userID}/moments/` });
 
         if (!videoResults.length) {
-            setMoment([]);
+            setMoment("");
             return;
         }
 
@@ -60,7 +60,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
         const latestVideo = sortedVideos[0];
         const urlOutput = await getUrl({ path: latestVideo.path });
         
-        setMoment([urlOutput.url]);
+        setMoment(urlOutput.url.toString());
     } catch (error) {
         console.error("Error fetching latest video:", error);
     }
@@ -73,10 +73,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
                 &times;
             </button>
             <h2 className="title">Preview Moment</h2>
-            <video controls>
-                <source src={moment.toString()} type="video/mp4" />
+            {moment ? (
+              <video controls>
+                <source src={moment} />
                 Your browser does not support the video tag.
-            </video>
+              </video>
+            ) : (
+              <p>Loading preview...</p>
+            )}
             <div className="button-container">
                 <button className="redo_button" onClick={handleRedo}>Redo</button>
                 <button className="save_button" onClick={handleSave}>Save</button>

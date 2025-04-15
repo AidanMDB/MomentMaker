@@ -40,7 +40,6 @@ export default function Library() {
     };
 
     const handleSubmit = async () => {
-        openPreview();
         //API CALL 
         //change this to the actual lambda when merged
         const url = `https://oww7phtdo4nqxpfsftccvdj6rm0fnils.lambda-url.us-east-1.on.aws/?userID=${userID}`;
@@ -61,7 +60,8 @@ export default function Library() {
             console.error('Error calling Lambda:', error);
             alert("Error calling Lambda: " + error);
         }
-
+        
+        openPreview();
     };
 
     const handleRedo = () => {
