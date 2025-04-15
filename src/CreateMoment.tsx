@@ -12,6 +12,10 @@ import face3 from "/head-shot-photography-studio-new-york.jpg";
 import face4 from "/istockphoto-1320651997-612x612.jpg";
 import face5 from "/images.jpg";
 
+
+//change this to the actual lambda when merged
+const LAMBDA_URL = 'https://oww7phtdo4nqxpfsftccvdj6rm0fnils.lambda-url.us-east-1.on.aws/';
+
 export default function Library() {
     const [userID, setUserID] = useState<string | null>(null);
     const [isPreviewOpen, setPreviewOpen] = useState(false);
@@ -39,33 +43,35 @@ export default function Library() {
         }
     };
 
-    const handleSubmit = async () => {
-        //API CALL 
-        //change this to the actual lambda when merged
-        const url = `https://oww7phtdo4nqxpfsftccvdj6rm0fnils.lambda-url.us-east-1.on.aws/?userID=${userID}`;
-
+    const createVideo = async () => {
+        alert("Creating video...");
+        //API CALL
         try {
             // Send a GET request to the Lambda function URL with the query string
-            const response = await fetch(url);
-            alert("fetching url")
+            const response = await fetch(`${LAMBDA_URL}?userID=${userID}`);
             if (response.ok) {
                 const data = await response.json();
                 console.log('Lambda response:', data);
-                alert("Lambda response: " + data);
             } else {
                 console.error('Lambda request failed:', response.statusText);
-                alert("Lambda request failed: " + response.statusText);
             }
         } catch (error) {
             console.error('Error calling Lambda:', error);
-            alert("Error calling Lambda: " + error);
         }
-        
+    }
+
+    const handleSubmit = async () => {
+        alert("Submit button clicked!");
+        await createVideo();
         openPreview();
     };
 
-    const handleRedo = () => {
-        alert("Redo button clicked!");
+    const handleRedo = async () => {
+        alert("Redo button clicked!"); 
+
+        await createVideo();
+        openPreview();
+
       };
     
       const handleSave = () => {
