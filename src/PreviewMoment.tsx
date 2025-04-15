@@ -12,7 +12,6 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
-  if (!isOpen) return null;
 
   const [userID, setUserID] = useState<string | null>(null);
   const [moment, setMoment] = useState<string | undefined>(undefined);
@@ -24,13 +23,15 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
 
   const handleSave = () => {
     onSave();
-    onClose();
   };
 
   useEffect(() => {
+      if (!isOpen) return;
       fetchUser();
       fetchLatestVideo();
     });
+
+  if (!isOpen) return null;
   
   const fetchUser = async () => {
       try {

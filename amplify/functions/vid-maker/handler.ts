@@ -1,15 +1,13 @@
-import { spawn } from "child_process";
 import { S3Client, GetObjectCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { uploadData } from "aws-amplify/storage";
 import fs from "fs";
 import { join, basename } from "path";
 import { pipeline } from "stream";
 import { promisify } from "util";
 import * as path from "path";
 import { randomUUID } from "crypto";
+import ffmpeg from "fluent-ffmpeg";
 
-const ffmpeg = require("fluent-ffmpeg");
 ffmpeg.setFfmpegPath("/opt/ffmpeglib/ffmpeg"); // For Lambda Layer or bundled binary
 
 const TMP_DIR = "/tmp";

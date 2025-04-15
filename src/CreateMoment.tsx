@@ -30,7 +30,10 @@ export default function Library() {
     const times = ["30 seconds", "1 minute", "5 minutes"];
 
     const openPreview = () => setPreviewOpen(true);
-    const closePreview = () => setPreviewOpen(false);
+    const closePreview = async () => {
+        await handleDeleteMoment();
+        setPreviewOpen(false);
+    }
 
     useEffect(() => {
         fetchUser();
@@ -98,7 +101,6 @@ export default function Library() {
         closePreview();
         setIsLoading(true);
         try {
-            await handleDeleteMoment();
             await createVideo();
         } catch (err) {
             alert("Creating Moment failed:");
@@ -109,7 +111,7 @@ export default function Library() {
       };
     
       const handleSave = () => {
-        alert("Save button clicked!");
+        setPreviewOpen(false);
       };
 
     return (
