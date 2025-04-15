@@ -33,7 +33,7 @@ To access the website go to URL:  [https://main.d1mzyzgpuskuft.amplifyapp.com/al
 - Select a song to be played in the background
 - Select a time constraint to determine the length
 - Submit video personalization
-  + based on customizations, the moment is created using (RILEY WHAT DID YOU USE)
+  + based on customizations, the moment is created using ffmpeg media processing functions
 
 **Preview Moment PopUp**
 - View and download the created moment
@@ -47,7 +47,7 @@ To access the website go to URL:  [https://main.d1mzyzgpuskuft.amplifyapp.com/al
 - **Front End**: React
 - **Database**: Amazon S3 Buckets and Amazon DynamoDB
 - **Authentication**: Amazon Cognito
-- **API**: RILEY ADD WHAT YOU USED
+- **API**: Amazon Lambda Function
 - EVERYONE ADD WHAT YOU USED
 
 ## Developers
