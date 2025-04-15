@@ -37,14 +37,7 @@ const faceLocationsDatabase = backend.data.resources.tables.FaceLocations;
 const videoAnalyzerFunction = backend.videoAnalyzer.resources.lambda;
 const storageS3 = backend.storage.resources.bucket;
 
-// Adds notifications to the S3 bucket so mediaUpload function can be triggered when a file is uploaded to the bucket
-backend.storage.resources.bucket.addEventNotification(
-  EventType.OBJECT_CREATED,
-  new LambdaDestination(mediaUpload),
-  {
-    prefix: 'user-media/',
-  }
-)
+
 
 // create SNS resource async video analysis
 const videoAnalysisStack = backend.createStack('AIVideoAnalysis');
@@ -98,24 +91,16 @@ backend.videoAnalyzer.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsD
 // Gives mediaUpload the ability to invoke the imageAnalyzer, videoAnalyzer and zipFileExtractor functions
 mediaUpload.addToRolePolicy(
   new PolicyStatement({
-    actions: ['lambda:InvokeFunction', 's3:HeadObject'],
-    resources: [imageAnalyzerFunction.functionArn, videoStarterFunction.functionArn, zipFileExtractorFunction.functionArn, storageS3.bucketArn],
+    actions: ['lambda:InvokeFunction'],
+    resources: [
+      videoStarterFunction.functionArn, 
+      imageAnalyzerFunction.functionArn, 
+      zipFileExtractorFunction.functionArn
+    ]
   })
 );
 
-// allow image analyzer to be invoked
-imageAnalyzerFunction.addPermission('AllowInvokeFromMediaUpload',
-  {
-    principal: new ServicePrincipal('lambda.amazonaws.com'),
-    //sourceArn: mediaUpload.functionArn,
-  }
-)
-//storageS3.addToResourcePolicy(
-//  new PolicyStatement({
-//    actions: ['s3:GetObject'],
-//    resources: []
-//  })
-//)
+//storageS3.addToResourcePolicy();
 
 
 // Give imageAnalyzer permission to use AWS rekognition AI
@@ -129,11 +114,20 @@ imageAnalyzerFunction.addToRolePolicy(
       'dynamoDB:UpdateItem', 
       'dynamoDB:GetItem',
       'S3:PutObject',
-      'S3:GetObject'
+      'S3:GetObject',
+      'S3:HeadObject'
     ],
-    resources: ["*"],
+    resources: ['*'],
   })
 )
+// allow image analyzer to be invoked
+imageAnalyzerFunction.addPermission('AllowInvokeFromMediaUpload',
+  {
+    principal: new ServicePrincipal('lambda.amazonaws.com'),
+    sourceArn: mediaUpload.functionArn,
+  }
+)
+
 
 videoAnalyzerFunction.addToRolePolicy(
   new PolicyStatement({
@@ -168,3 +162,12 @@ videoStarterFunction.addToRolePolicy(
   })
 )
 
+
+// Adds notifications to the S3 bucket so mediaUpload function can be triggered when a file is uploaded to the bucket
+storageS3.addEventNotification(
+  EventType.OBJECT_CREATED,
+  new LambdaDestination(mediaUpload),
+  {
+    prefix: 'user-media/',
+  }
+)
