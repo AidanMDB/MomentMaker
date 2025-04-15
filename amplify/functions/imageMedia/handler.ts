@@ -19,7 +19,7 @@ let userID: string; // replace with actual user ID
  * It uses AWS Rekognition to detect faces in the image and filters out faces with confidence > 70%.
  */
 async function detectFaces() {
-    console.log(`Detecting faces`);
+    console.log(`Detecting faces ${objectKey} in ${bucketName}`);
     const params = {
         Image: {
             S3Object: {
@@ -40,7 +40,7 @@ async function detectFaces() {
  * @returns {Promise<Buffer>} - Returns the image from S3 as a Buffer.
  */
 async function getS3Image() {
-    console.log(`Getting image from S3`);
+    console.log(`Getting image from S3 ${objectKey} in ${bucketName}`);
     const params = {
         Bucket: `${bucketName}`,
         Key: `${objectKey}`
@@ -57,7 +57,7 @@ async function getS3Image() {
  * @returns buffers of cropped faces
  */
 async function cropFaces(detectedFaces: FaceDetail[]) {
-    console.log(`Cropping faces`);
+    console.log(`Cropping faces `);
     const imageBody = await getS3Image();
     const image = sharp(imageBody);
     const imageMetadata = await image.metadata();

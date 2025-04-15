@@ -35,7 +35,7 @@ const zipFileExtractorFunction = backend.zipFileExtractor.resources.lambda;
 const userFacesDatabase = backend.data.resources.tables.UserFaces;
 const faceLocationsDatabase = backend.data.resources.tables.FaceLocations;
 const videoAnalyzerFunction = backend.videoAnalyzer.resources.lambda;
-//const storageS3 = backend.storage.resources.bucket;
+const storageS3 = backend.storage.resources.bucket;
 
 // Adds notifications to the S3 bucket so mediaUpload function can be triggered when a file is uploaded to the bucket
 backend.storage.resources.bucket.addEventNotification(
@@ -98,11 +98,18 @@ backend.videoAnalyzer.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsD
 // Gives mediaUpload the ability to invoke the imageAnalyzer, videoAnalyzer and zipFileExtractor functions
 mediaUpload.addToRolePolicy(
   new PolicyStatement({
-    actions: ['lambda:InvokeFunction'],
-    resources: [imageAnalyzerFunction.functionArn, videoStarterFunction.functionArn, zipFileExtractorFunction.functionArn],
+    actions: ['lambda:InvokeFunction', 's3:HeadObject'],
+    resources: [imageAnalyzerFunction.functionArn, videoStarterFunction.functionArn, zipFileExtractorFunction.functionArn, storageS3.bucketArn],
   })
 );
 
+// allow image analyzer to be invoked
+imageAnalyzerFunction.addPermission('AllowInvokeFromMediaUpload',
+  {
+    principal: new ServicePrincipal('lambda.amazonaws.com'),
+    //sourceArn: mediaUpload.functionArn,
+  }
+)
 //storageS3.addToResourcePolicy(
 //  new PolicyStatement({
 //    actions: ['s3:GetObject'],

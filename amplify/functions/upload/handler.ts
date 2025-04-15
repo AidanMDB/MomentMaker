@@ -5,31 +5,36 @@ import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
 
 
 const lambdaClient = new LambdaClient({ region: 'us-east-1' });
+const s3Client = new S3Client({ region: 'us-east-1' });
 
 
 async function getUserIdMetadata(bucket: string, key: string) {
-    const s3Client = new S3Client({ region: 'us-east-1' });
+    console.log(`Getting userID metadata for ${key} in ${bucket}`);
     const params = {
         Bucket: bucket,
         Key: key,
     };
     const command = new HeadObjectCommand(params);
     const response = await s3Client.send(command);
+    console.log(`Response ${response}`);
     return response.Metadata?.userId || null;
 }
 
 
-async function invokeLambdaFunction(functionName: string | undefined, object: string, bucketName: string) {
+async function invokeLambdaFunction(functionName: string | undefined, object: string, bucketName: string, userID: string | null) {
+    console.log(`Invoking ${functionName} for object ${object} in bucket ${bucketName}`);
     const params = {
         FunctionName: functionName,
-        InvocationType: InvocationType.Event,
+        InvocationType: InvocationType.RequestResponse,
+        
         Payload: JSON.stringify({
             bucket: bucketName,
             key: object,
-            userId: getUserIdMetadata(bucketName, object),
+            userId: userID,
         }),
     };
     const response = await lambdaClient.send(new InvokeCommand(params));
+    console.log(`Response ${response}`);
     return response;
 }
 
@@ -42,7 +47,7 @@ export const handler: S3Handler = async (event) => {
     
     // loop through all the uploaded media and determine which lambda function to invoke based on the prefix of the key
     for (const objectKey of objectKeys) {
-
+        const userID = await getUserIdMetadata(currentBucketName, objectKey);
         if (objectKey.startsWith('user-media/') && objectKey.includes('/faces/')) 
         {
             console.log('Ignore Face Directory');
@@ -52,19 +57,15 @@ export const handler: S3Handler = async (event) => {
         
         if (objectKey.startsWith('user-media/') && objectKey.includes('/image/')) 
         {
-            console.log(`Image upload detected: ${objectKey}`);
-            const response = await invokeLambdaFunction(process.env.IMAGE_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
-            console.log(`Image uploaded to: ${objectKey}\nInvoke Response ${response}`);
+            const response = await invokeLambdaFunction(process.env.IMAGE_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName, userID);
         }
         else if (objectKey.startsWith('user-media/') && objectKey.includes('/video/')) 
         {
-            const response = await invokeLambdaFunction(process.env.VIDEO_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
-            console.log(`Video uploaded to: ${objectKey}\nInvoke Response ${response}`);
+            const response = await invokeLambdaFunction(process.env.VIDEO_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName, userID);
         }
         else if (objectKey.startsWith('user-media/') && objectKey.includes('/zip/')) 
         {
-            const response = await invokeLambdaFunction(process.env.ZIP_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName);
-            console.log(`Zip file uploaded to: ${objectKey}\nInvoke Response ${response}`);
+            const response = await invokeLambdaFunction(process.env.ZIP_ANALYZER_FUNCTION_NAME, objectKey, currentBucketName, userID);
         }
 
         console.log(`${objectKey} in ${currentBucketName}`);
