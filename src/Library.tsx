@@ -5,8 +5,6 @@ import "./AllStyles.css"
 import "./Library.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-import demo_video from "/RPReplay_Final1741140628.mp4";
-
 export default function Library() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState("Photos");
@@ -14,9 +12,8 @@ export default function Library() {
     const [photos, setPhotos] = useState<URL[]>([]);
     const [videos, setVideos] = useState<URL[]>([]);
     const [songs, setSongs] = useState<URL[]>([]);
+    const [moments, setMoments] = useState<URL[]>([]);
 
-    const moments = [ demo_video ];
-    
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
     }
@@ -83,6 +80,7 @@ export default function Library() {
             const { items: photoResults } = await list({ path: `user-media/${userID}/image/` });
             const { items: videoResults } = await list({ path: `user-media/${userID}/video/` });
             const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
+            const { items: momementResults } = await list({ path: `user-media/${userID}/moments/` });
 
             const photoUrls = await Promise.all(
                 photoResults.map(async (file) => {
@@ -102,10 +100,17 @@ export default function Library() {
                     return urlOutput.url;
                 })
             );
+            const momentUrls = await Promise.all(
+                momementResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    return urlOutput.url;
+                })
+            );
 
             setPhotos(photoUrls);
             setVideos(videoUrls);
             setSongs(songUrls);
+            setMoments(momentUrls);
         } catch (error) {
             console.error("Error fetching media:", error);
         }
