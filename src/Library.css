@@ -89,6 +89,11 @@
     margin: 10px;
 }
 
+.media_item.selected {
+    outline: 4px solid var(--light-purple);
+    opacity: 0.8;
+}
+
 .media_item_audio {
     width: 150px;
     border-radius: 10px;

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { uploadData, list, getUrl } from 'aws-amplify/storage';
+import { uploadData, list, getUrl, remove } from 'aws-amplify/storage';
 import { getCurrentUser } from 'aws-amplify/auth';
 import "./AllStyles.css"
 import "./Library.css"
@@ -12,6 +12,7 @@ export default function Library() {
     const [activeTab, setActiveTab] = useState("Photos");
     const [userID, setUserID] = useState<string | null>(null);
     const [photos, setPhotos] = useState<URL[]>([]);
+    const [selectedPhotos, setSelectedPhotos] = useState<URL[]>([]);
     const [videos, setVideos] = useState<URL[]>([]);
     const [songs, setSongs] = useState<URL[]>([]);
 
@@ -24,8 +25,14 @@ export default function Library() {
     //Upon Loading
     useEffect(() => {
         fetchUser();
-        fetchMedia();
-    });
+    }, []);
+    
+    useEffect(() => {
+        if (userID) {
+            fetchMedia();
+        }
+    }, [userID]);
+    
 
     const fetchUser = async () => {
         try {
@@ -36,6 +43,34 @@ export default function Library() {
         }
     };
 
+    //Delete
+    const togglePhotoSelection = (photo: URL) => {
+        setSelectedPhotos((prev) => {
+            if (prev.includes(photo)) {
+                return prev.filter((p) => p !== photo);
+            } else {
+                return [...prev, photo];
+            }
+        });
+    };    
+
+    const handleDeleteClick = async () => {
+        if (activeTab === "Photos" && selectedPhotos.length > 0) {
+            try {
+                for (const photoUrl of selectedPhotos) {
+                    const url = new URL(photoUrl.toString());
+                    const keyMatch = url.pathname.match(/user-media\/.+/);
+                    if (keyMatch) {
+                        await remove({ path: keyMatch[0] });
+                    }
+                }
+                fetchMedia();
+                setSelectedPhotos([]);
+            } catch (error) {
+                console.error("Error deleting photos:", error);
+            }
+        }
+    };
 
     //Upload
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "video/mp4", "audio/mp3", "audio/mpeg"];
@@ -111,10 +146,6 @@ export default function Library() {
         }
       };
 
-    const handleDeleteClick = () => {
-        alert("DELETE CLICKED")
-    }
-
     //HTML
     return (
         <div className="media_container">
@@ -142,9 +173,14 @@ export default function Library() {
                 </div>
             </div> 
             <div className="media_grid">
-            {activeTab === "Photos" && (
+                {activeTab === "Photos" && (
                     photos.map((src, index) => (
-                        <img key={index} src={src.toString()} className="media_item" />
+                        <img
+                            key={index}
+                            src={src.toString()}
+                            className={`media_item ${selectedPhotos.includes(src) ? 'selected' : ''}`}
+                            onClick={() => togglePhotoSelection(src)}
+                        />
                     ))
                 )}
                 {activeTab === "Videos" && (
