@@ -1,6 +1,5 @@
 import './PreviewMoment.css';
 import "./AllStyles.css"
-import demo_video from "/RPReplay_Final1741140628.mp4"
 import { useEffect, useState } from "react";
 import { getCurrentUser } from 'aws-amplify/auth';
 import { list, getUrl } from 'aws-amplify/storage';

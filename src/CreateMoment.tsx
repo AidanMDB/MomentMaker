@@ -22,6 +22,7 @@ export default function Library() {
     const [selectedPersons, setSelectedPersons] = useState<string[]>([]);
     const [selectedSong, setSelectedSong] = useState("Happy");
     const [selectedTime, setSelectedTime] = useState("5 minutes");
+    const [isLoading, setIsLoading] = useState(false);
 
     const people = [ { name: "Jane", image: face1 }, { name: "Mike", image: face2 }, { name: "Stacy", image: face3 }, { name: "Sarah", image: face4 }, { name: "Bob", image: face5 } ];
     const songs = ["Happy","Sad","Angry","Calm"];
@@ -44,7 +45,6 @@ export default function Library() {
     };
 
     const createVideo = async () => {
-        alert("Creating video...");
         //API CALL
         try {
             // Send a GET request to the Lambda function URL with the query string
@@ -61,17 +61,27 @@ export default function Library() {
     }
 
     const handleSubmit = async () => {
-        alert("Submit button clicked!");
-        await createVideo();
+        setIsLoading(true);
+        try {
+            await createVideo();
+        } catch (err) {
+            alert("Creating Moment failed:");
+        } finally {
+            setIsLoading(false);
+        }
         openPreview();
     };
 
     const handleRedo = async () => {
-        alert("Redo button clicked!"); 
-
-        await createVideo();
+        setIsLoading(true);
+        try {
+            await createVideo();
+        } catch (err) {
+            alert("Creating Moment failed:");
+        } finally {
+            setIsLoading(false);
+        }
         openPreview();
-
       };
     
       const handleSave = () => {
@@ -109,6 +119,12 @@ export default function Library() {
             </div>
             <button className="submit_button"  onClick={handleSubmit}> Submit </button>
             <PreviewMoment isOpen={isPreviewOpen} onClose={closePreview} onRedo={handleRedo} onSave={handleSave} />
+            {isLoading && (
+            <div className="loading-overlay">
+                <div className="spinner" />
+                <p style={{ color: "white" }}>Creating Your Moment...</p>
+            </div>
+            )}
         </div>
     );
 }
