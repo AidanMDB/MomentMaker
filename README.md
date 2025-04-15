@@ -15,6 +15,7 @@ To access the website go to URL:  [https://main.d1mzyzgpuskuft.amplifyapp.com/al
 - **Download Media** - download your moment onto your own personal device
 
 ## Work Flow
+User manual can found in file labeled USERMANUAL.md
 
 **Home Page**
 - Creates an account and login to their own account
