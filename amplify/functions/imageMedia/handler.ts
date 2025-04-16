@@ -1,5 +1,5 @@
 import { RekognitionClient, DetectFacesCommand, CompareFacesCommand, FaceDetail} from "@aws-sdk/client-rekognition";
-import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { Handler } from "aws-lambda";
 import sharp from "sharp";
@@ -11,7 +11,23 @@ const dbClient = new DynamoDBClient({region: 'us-east-1'});
 
 let bucketName: string;
 let objectKey: string;
-let userID: string; // replace with actual user ID
+let userID: string | null; // replace with actual user ID
+
+
+async function getUserIdMetadata(bucket: string, key: string) {
+    console.log(`Getting userID metadata for ${key} in ${bucket}`);
+    const params = {
+        Bucket: bucket,
+        Key: key,
+    };
+    const command = new HeadObjectCommand(params);
+    const response = await s3Client.send(command);
+    console.log(`Response ${response.Metadata}`);
+    console.log(`Response ${JSON.stringify(response, null, 2)}`);
+    return response.Metadata?.userid || null;
+}
+
+
 
 
 /**
@@ -19,7 +35,7 @@ let userID: string; // replace with actual user ID
  * It uses AWS Rekognition to detect faces in the image and filters out faces with confidence > 70%.
  */
 async function detectFaces() {
-    console.log(`Detecting faces`);
+    console.log(`Detecting faces ${objectKey} in ${bucketName}`);
     const params = {
         Image: {
             S3Object: {
@@ -40,7 +56,7 @@ async function detectFaces() {
  * @returns {Promise<Buffer>} - Returns the image from S3 as a Buffer.
  */
 async function getS3Image() {
-    console.log(`Getting image from S3`);
+    console.log(`Getting image from S3 ${objectKey} in ${bucketName}`);
     const params = {
         Bucket: `${bucketName}`,
         Key: `${objectKey}`
@@ -57,7 +73,7 @@ async function getS3Image() {
  * @returns buffers of cropped faces
  */
 async function cropFaces(detectedFaces: FaceDetail[]) {
-    console.log(`Cropping faces`);
+    console.log(`Cropping faces `);
     const imageBody = await getS3Image();
     const image = sharp(imageBody);
     const imageMetadata = await image.metadata();
@@ -268,7 +284,7 @@ export const handler: Handler = async (event) => {
     //const payload = JSON.parse(event);
     objectKey = event.key;
     bucketName = event.bucket;
-    userID = "user1"; // replace with call to user's ID from Cognito or other auth service
+    userID = await getUserIdMetadata(bucketName, objectKey);
     console.log(`Analyzing ${objectKey} in ${bucketName}`);
     await analyzeImage();
 };
