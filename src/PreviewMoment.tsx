@@ -19,8 +19,6 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
    
   const navigate = useNavigate();
 
-  if (!isOpen) return null;
-
   const handleRedo = () => {
     onRedo(); 
     onClose();
