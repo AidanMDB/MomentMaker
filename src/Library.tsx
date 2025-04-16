@@ -12,8 +12,9 @@ export default function Library() {
     const [photos, setPhotos] = useState<URL[]>([]);
     const [videos, setVideos] = useState<URL[]>([]);
     const [songs, setSongs] = useState<URL[]>([]);
-    const [moments, setMoments] = useState<URL[]>([]);
 
+    const moments = [ demo_video ];
+    
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
     }
