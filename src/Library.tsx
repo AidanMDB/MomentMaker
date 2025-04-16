@@ -97,8 +97,11 @@ export default function Library() {
             const songUrls = await Promise.all(
                 songResults.map(async (file) => {
                     const urlOutput = await getUrl({ path: file.path });
-                    return urlOutput.url;
-                })
+                    const fullPathParts = file.path.split("/");
+                    const fullFileName = fullPathParts[fullPathParts.length - 1];
+                    const songName = fullFileName.replace(/\.[^/.]+$/, "");
+                    return { name: songName || "Untitled", url: urlOutput.url };
+                  })
             );
             const momentUrls = await Promise.all(
                 momementResults.map(async (file) => {
@@ -151,11 +154,16 @@ export default function Library() {
                     ))
                 )}
                 {activeTab === "Songs" && (
-                    songs.map((src, index) => (
-                        <audio key={index} className="media_item_audio" controls>
-                            <source src={src.toString()} type="audio/mp3" />
-                        </audio>
-                    ))
+                    <div className="song-column">
+                        {songs.map((song, index) => (
+                            <div key={index} className="song-item">
+                            <p className="song-name">{song.name}</p>
+                            <audio className="media_item_audio" controls>
+                                <source src={song.url.toString()} type="audio/mp3" />
+                            </audio>
+                            </div>
+                        ))}
+                    </div>
                 )}
                 {activeTab === "Moments" && (
                     moments.map((src, index) => (

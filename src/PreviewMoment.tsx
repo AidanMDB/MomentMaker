@@ -3,6 +3,7 @@ import "./AllStyles.css"
 import { useEffect, useState } from "react";
 import { getCurrentUser } from 'aws-amplify/auth';
 import { list, getUrl } from 'aws-amplify/storage';
+import { useNavigate } from "react-router-dom"
 
 interface ModalProps {
   isOpen: boolean;
@@ -15,6 +16,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
 
   const [userID, setUserID] = useState<string | null>(null);
   const [moment, setMoment] = useState<string | undefined>(undefined);
+   
+  const navigate = useNavigate();
+
+  if (!isOpen) return null;
 
   const handleRedo = () => {
     onRedo(); 
@@ -23,6 +28,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
 
   const handleSave = () => {
     onSave();
+    onClose();
+    navigate("/all", {
+      state: { activeTab: "library" }
+    });
   };
 
   useEffect(() => {
