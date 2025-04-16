@@ -15,7 +15,8 @@ import face5 from "/images.jpg";
 
 
 //change this to the actual lambda when merged
-const LAMBDA_URL = 'https://stfvtflwooq5txkmuwjzhvc5wq0pkikm.lambda-url.us-east-1.on.aws/';
+const LAMBDA_URL = 'https://oww7phtdo4nqxpfsftccvdj6rm0fnils.lambda-url.us-east-1.on.aws/';
+// const LAMBDA_URL = 'https://stfvtflwooq5txkmuwjzhvc5wq0pkikm.lambda-url.us-east-1.on.aws/';
 
 export default function Library() {
     const [userID, setUserID] = useState<string | null>(null);

@@ -14,10 +14,12 @@ const TMP_DIR = "/tmp";
 const IMAGE_DURATION = 4;
 const SUPPORTED_VIDEO_EXT = [".mp4", ".avi", ".mov", ".mkv"];
 const SUPPORTED_IMAGE_EXT = [".jpg", ".jpeg", ".png", ".gif"];
+const OUTPUT_RESOLUTION = { width: 1280, height: 720 };
 
 const pipe = promisify(pipeline);
 const s3Client = new S3Client({ region: "us-east-1" });
-const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
+const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fdhfxhm7qwnv";
+//const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     console.log("Handler invoked");
@@ -107,6 +109,7 @@ function parseVideo(inputPath: string, outputPath: string, start: number, end: n
         ffmpeg(path.join(TMP_DIR, inputPath))
             .setStartTime(start)
             .setDuration(end - start)
+            .videoFilters(`scale=${OUTPUT_RESOLUTION.width}:${OUTPUT_RESOLUTION.height}:force_original_aspect_ratio=decrease,pad=${OUTPUT_RESOLUTION.width}:${OUTPUT_RESOLUTION.height}:(ow-iw)/2:(oh-ih)/2:color=black`)
             .output(path.join(TMP_DIR, outputPath))
             .on("end", () => {
                 console.log(`Video parsed successfully: ${outputPath}`);
@@ -125,7 +128,7 @@ function convertImageToVideo(imagePath: string, outputPath: string, duration = I
     return new Promise((resolve, reject) => {
         ffmpeg(path.join(TMP_DIR, imagePath))
             .loop(duration)
-            .outputOptions(["-t " + duration, "-r 24"])
+            .outputOptions(["-t " + duration, "-r 24", `-vf scale=${OUTPUT_RESOLUTION.width}:${OUTPUT_RESOLUTION.height}:force_original_aspect_ratio=decrease,pad=${OUTPUT_RESOLUTION.width}:${OUTPUT_RESOLUTION.height}:(ow-iw)/2:(oh-ih)/2:color=black`])
             .output(path.join(TMP_DIR, outputPath))
             .on("end", () => {
                 console.log(`Image converted to video successfully: ${outputPath}`);
