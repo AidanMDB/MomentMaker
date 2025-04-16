@@ -29,7 +29,7 @@
     background: var(--light-gray);
     display: flex;
     align-items: center;
-    height: 255px;
+    height: auto;
     margin-top: 25px;
     margin-bottom: 25px;
     border-radius: 4px;
@@ -75,6 +75,7 @@
     height: auto;
     margin: 0px 15px;
     cursor: pointer;
+    border-radius: 8px;
 }
 
 .feature_dropbox:focus {
@@ -87,4 +88,47 @@
     border: 1px solid var(--dark-gray);
     color: var(--light-purple);
     cursor: pointer;
+}
+
+.time_dropbox {
+    background-color: var(--dark-gray);
+    outline: 1px solid var(--dark-gray);
+    border: 1px solid var(--dark-gray);
+    color: var(--light-purple);
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 18px;
+    padding: 4px 8px;
+    margin-bottom: 20px;
+    margin-left: 15px;
+    border-radius: 8px;
+  }
+
+  .time_words {
+    padding-left: 10px;
+  }
+
+.time_columns {
+    display: flex;
+}
+
+.face_item {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin: 20px;
+    border-radius: 20%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border 0.2s ease;
+}
+
+.face_item.selected {
+    border: 2px solid #9c6bae;
+    box-shadow: 0 0 10px rgba(156, 107, 174, 0.7);
+}
+
+.face-grid {
+    display: flex;
+    flex-wrap: wrap;
 }

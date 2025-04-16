@@ -64,21 +64,47 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     height: auto;
-}
-
-.media_item {
+  }
+  
+  .media_item {
     width: 150px;
     height: 150px;
     border-radius: 10px;
     object-fit: cover;
     display: block;
     margin: 10px;
-}
-
-.media_item_audio {
-    width: 150px;
+  }
+  
+  .song-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    grid-column: span 10;
+  }
+  
+  .song-item {
+    background-color: var(--dark-gray);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: -10px;
+    width: 100%;
+  }
+  
+  .song-name {
+    width: auto;
+    font-size: 18px;
+    font-weight: bold;
+    margin-left: 15px;
+    margin-right: 20px;
+    text-align: left;
+  }
+  
+  .media_item_audio {
+    width: 500px;
     border-radius: 10px;
     object-fit: cover;
     display: block;
-    color: var(--light-gray);
-}
+  }

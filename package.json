@@ -26,6 +26,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.1.5",
+    "react-select": "^5.10.1",
     "sharp": "^0.33.5",
     "stream-to-buffer": "^0.1.0",
     "uuid": "^11.1.0"
