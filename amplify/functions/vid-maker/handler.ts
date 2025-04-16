@@ -7,19 +7,21 @@ import { promisify } from "util";
 import * as path from "path";
 import { randomUUID } from "crypto";
 import ffmpeg from "fluent-ffmpeg";
+import { time } from "console";
 
 ffmpeg.setFfmpegPath("/opt/ffmpeglib/ffmpeg"); // For Lambda Layer or bundled binary
 
 const TMP_DIR = "/tmp";
 const IMAGE_DURATION = 4;
+let TOTAL_VIDEO_DURATION = 300; // Default to 5 minutes
 const SUPPORTED_VIDEO_EXT = [".mp4", ".avi", ".mov", ".mkv"];
 const SUPPORTED_IMAGE_EXT = [".jpg", ".jpeg", ".png", ".gif"];
 const OUTPUT_RESOLUTION = { width: 1280, height: 720 };
 
 const pipe = promisify(pipeline);
 const s3Client = new S3Client({ region: "us-east-1" });
-//const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fdhfxhm7qwnv";
-const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
+const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fdhfxhm7qwnv";
+//const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     console.log("Handler invoked");
@@ -43,6 +45,22 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         console.error("Missing userID parameter");
         return { statusCode: 400, body: JSON.stringify({ error: "Missing userID parameter" }) };
     }
+    console.log("UserID:", userID);
+
+    const timeLimit = event.queryStringParameters?.timeLimit;
+    if (!timeLimit) {
+        console.error("Missing timeLimit parameter");
+        return { statusCode: 400, body: JSON.stringify({ error: "Missing timeLimit parameter" }) };
+    }
+    TOTAL_VIDEO_DURATION = parseInt(timeLimit, 10);
+    console.log("Time Limit:", timeLimit);
+
+    const song = event.queryStringParameters?.song;
+    if (!song) {
+        console.error("Missing song parameter");
+        return { statusCode: 400, body: JSON.stringify({ error: "Missing song parameter" }) };
+    }
+    console.log("Song:", song);
 
     try {
         console.log("Downloading all media for userID:", userID);
@@ -163,8 +181,17 @@ async function handleFiles(fileList: string[]): Promise<string[]> {
     }
 
     console.log("Processed files (shuffled):", processedFiles);
-    return processedFiles.sort(() => Math.random() - 0.5);
+    return shuffleArray(processedFiles);
 }
+
+function shuffleArray(array: string[]): string[] {
+    const arr = [...array]; // make a shallow copy to avoid mutating original
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+      [arr[i], arr[j]] = [arr[j], arr[i]]; // swap elements
+    }
+    return arr;
+  }  
 
 function mergeMedia(clips: string[], outputPath: string): Promise<string> {
     console.log("Merging media clips:", clips);
@@ -172,12 +199,10 @@ function mergeMedia(clips: string[], outputPath: string): Promise<string> {
         const tempListFile = path.join(TMP_DIR, "input.txt");
         fs.writeFileSync(tempListFile, clips.map(f => `file '${path.join(TMP_DIR, f)}'`).join("\n"));
 
-        const durationLimit = 300; //5 minutes in seconds
-
         ffmpeg()
             .input(tempListFile)
             .inputOptions(["-f", "concat", "-safe", "0"])
-            .outputOptions(['-preset', 'ultrafast', '-t', `${durationLimit}`])
+            .outputOptions(['-preset', 'ultrafast', '-t', `${TOTAL_VIDEO_DURATION}`])
             .output(path.join(TMP_DIR, outputPath))
             .on("end", () => {
                 console.log(`Media merged successfully: ${outputPath}`);

@@ -21,12 +21,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
 
   const handleRedo = () => {
     onRedo(); 
-    onClose();
   };
 
   const handleSave = () => {
     onSave();
-    onClose();
     navigate("/all", {
       state: { activeTab: "library" }
     });
