@@ -17,7 +17,7 @@ const SUPPORTED_IMAGE_EXT = [".jpg", ".jpeg", ".png", ".gif"];
 
 const pipe = promisify(pipeline);
 const s3Client = new S3Client({ region: "us-east-1" });
-const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fdhfxhm7qwnv";
+const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     console.log("Handler invoked");
