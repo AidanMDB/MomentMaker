@@ -111,3 +111,24 @@
 .time_columns {
     display: flex;
 }
+
+.face_item {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin: 20px;
+    border-radius: 20%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border 0.2s ease;
+}
+
+.face_item.selected {
+    border: 2px solid #9c6bae;
+    box-shadow: 0 0 10px rgba(156, 107, 174, 0.7);
+}
+
+.face-grid {
+    display: flex;
+    flex-wrap: wrap;
+}
