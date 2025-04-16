@@ -1,7 +1,9 @@
 import './PreviewMoment.css';
 import "./AllStyles.css"
+import { useEffect, useState } from "react";
+import { getCurrentUser } from 'aws-amplify/auth';
+import { list, getUrl } from 'aws-amplify/storage';
 import { useNavigate } from "react-router-dom"
-import demo_video from "/RPReplay_Final1741140628.mp4"
 
 interface ModalProps {
   isOpen: boolean;
@@ -10,10 +12,12 @@ interface ModalProps {
   onSave: () => void;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {  
-  const navigate = useNavigate();
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
 
-  if (!isOpen) return null;
+  const [userID, setUserID] = useState<string | null>(null);
+  const [moment, setMoment] = useState<string | undefined>(undefined);
+   
+  const navigate = useNavigate();
 
   const handleRedo = () => {
     onRedo(); 
@@ -28,6 +32,47 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
     });
   };
 
+  useEffect(() => {
+      if (!isOpen) return;
+      fetchUser();
+      fetchLatestVideo();
+    });
+
+  if (!isOpen) return null;
+  
+  const fetchUser = async () => {
+      try {
+          const user = await getCurrentUser();
+          setUserID(user.userId);
+      } catch (error) {
+          console.error("Error fetching user:", error);
+      }
+  };
+
+  const fetchLatestVideo = async () => {
+    try {
+        const { items: videoResults } = await list({ path: `user-media/${userID}/moments/` });
+
+        if (!videoResults.length) {
+            setMoment("");
+            return;
+        }
+
+        const sortedVideos = videoResults
+            .filter(file => file?.lastModified)
+            .sort((a, b) =>
+              new Date(b?.lastModified ?? 0).getTime() - new Date(a?.lastModified ?? 0).getTime()
+            );
+            
+        const latestVideo = sortedVideos[0];
+        const urlOutput = await getUrl({ path: latestVideo.path });
+        
+        setMoment(urlOutput.url.toString());
+    } catch (error) {
+        console.error("Error fetching latest video:", error);
+    }
+};
+
   return (
     <div className="modal-overlay">
         <div className="modal-content">
@@ -35,10 +80,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
                 &times;
             </button>
             <h2 className="title">Preview Moment</h2>
-            <video controls>
-                <source src={demo_video} type="video/mp4" />
+            {moment ? (
+              <video controls>
+                <source src={moment} />
                 Your browser does not support the video tag.
-            </video>
+              </video>
+            ) : (
+              <p>Loading preview...</p>
+            )}
             <div className="button-container">
                 <button className="redo_button" onClick={handleRedo}>Redo</button>
                 <button className="save_button" onClick={handleSave}>Save</button>

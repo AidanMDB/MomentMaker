@@ -1,10 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { getCurrentUser } from 'aws-amplify/auth';
 import { list, getUrl } from 'aws-amplify/storage';
+import { remove } from 'aws-amplify/storage';
 import PreviewMoment from './PreviewMoment'
 import "./AllStyles.css"
 import "./CreateMoment.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
+
+//change this to the actual lambda when merged
+//const LAMBDA_URL = 'https://oww7phtdo4nqxpfsftccvdj6rm0fnils.lambda-url.us-east-1.on.aws/'; //sandbox
+const LAMBDA_URL = 'https://stfvtflwooq5txkmuwjzhvc5wq0pkikm.lambda-url.us-east-1.on.aws/';
 
 export default function Library() {
     const [userID, setUserID] = useState<string | null>(null);
@@ -14,9 +19,13 @@ export default function Library() {
     const [selectedPersons, setSelectedPersons] = useState<string[]>([]);
     const [selectedSong, setSelectedSong] = useState("Upload Songs");
     const [selectedTime, setSelectedTime] = useState<number>(60);
+    const [isLoading, setIsLoading] = useState(false);
 
     const openPreview = () => setPreviewOpen(true);
-    const closePreview = () => setPreviewOpen(false);
+    const closePreview = async () => {
+        await handleDeleteMoment();
+        setPreviewOpen(false);
+    }
 
     const fetchSongs = useCallback(async () => {
         if (!userID) return;
@@ -68,6 +77,72 @@ export default function Library() {
             console.error("Error fetching user:", error);
         }
     };
+
+    const createVideo = async () => {
+        //API CALL
+        try {
+            // Send a GET request to the Lambda function URL with the query string
+            const response = await fetch(`${LAMBDA_URL}?userID=${userID}`);
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Lambda response:', data);
+            } else {
+                console.error('Lambda request failed:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error calling Lambda:', error);
+        }
+    }
+
+    const handleDeleteMoment = async () => {
+        try {
+            const { items: videoResults } = await list({ path: `user-media/${userID}/moments/` });
+    
+            if (!videoResults.length) {
+                return;
+            }
+    
+            const sortedVideos = videoResults
+                .filter(file => file?.lastModified)
+                .sort((a, b) =>
+                  new Date(b?.lastModified ?? 0).getTime() - new Date(a?.lastModified ?? 0).getTime()
+                );
+                
+            const latestVideo = sortedVideos[0];
+            await remove({ path: latestVideo.path });
+        } catch (error) {
+            console.error("Error removing latest moment:", error);
+        }
+    }
+
+    const handleSubmit = async () => {
+        setIsLoading(true);
+        try {
+            await createVideo();
+        } catch (err) {
+            alert("Creating Moment failed:");
+        } finally {
+            setIsLoading(false);
+        }
+        openPreview();
+    };
+
+    const handleRedo = async () => {
+        closePreview();
+        setIsLoading(true);
+        try {
+            await createVideo();
+        } catch (err) {
+            alert("Creating Moment failed:");
+        } finally {
+            setIsLoading(false);
+        }
+        openPreview();
+      };
+    
+    const handleSave = () => {
+        setPreviewOpen(false);
+    }
       
     const togglePersonSelection = (src: string) => {
         setSelectedPersons((prev) =>
@@ -76,14 +151,6 @@ export default function Library() {
                 : [...prev, src]
         );
     };
-    
-    const handleRedo = () => {
-        alert("Redo button clicked!");
-      };
-    
-    const handleSave = () => {
-    alert("Save button clicked!");
-      };
 
     const handleTimeChange = (value: number, unit: 'minutes' | 'seconds') => {
         const minutes = unit === 'minutes' ? value : Math.floor(selectedTime / 60);
@@ -155,8 +222,14 @@ export default function Library() {
                     </div>
                 </div>
             </div>
-            <button className="submit_button"  onClick={openPreview}> Submit </button>
+            <button className="submit_button"  onClick={handleSubmit}> Submit </button>
             <PreviewMoment isOpen={isPreviewOpen} onClose={closePreview} onRedo={handleRedo} onSave={handleSave} />
+            {isLoading && (
+            <div className="loading-overlay">
+                <div className="spinner" />
+                <p style={{ color: "white" }}>Creating Your Moment...</p>
+            </div>
+            )}
         </div>
     );
 }
