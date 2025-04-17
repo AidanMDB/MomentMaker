@@ -20,6 +20,7 @@ export default function Library() {
     const [selectedSong, setSelectedSong] = useState("Upload Songs");
     const [selectedTime, setSelectedTime] = useState<number>(60);
     const [isLoading, setIsLoading] = useState(false);
+    const [moment, setMoment] = useState<string | undefined>(undefined);
 
     const openPreview = () => setPreviewOpen(true);
     const closePreview = async () => {
@@ -94,6 +95,30 @@ export default function Library() {
         }
     }
 
+    const fetchLatestVideo = async () => {
+        try {
+            const { items: videoResults } = await list({ path: `user-media/${userID}/moments/` });
+    
+            if (!videoResults.length) {
+                setMoment("");
+                return;
+            }
+    
+            const sortedVideos = videoResults
+                .filter(file => file?.lastModified)
+                .sort((a, b) =>
+                new Date(b?.lastModified ?? 0).getTime() - new Date(a?.lastModified ?? 0).getTime()
+                );
+                
+            const latestVideo = sortedVideos[0];
+            const urlOutput = await getUrl({ path: latestVideo.path });
+            
+            setMoment(urlOutput.url.toString());
+        } catch (error) {
+            console.error("Error fetching latest video:", error);
+        }
+    };
+
     const handleDeleteMoment = async () => {
         try {
             const { items: videoResults } = await list({ path: `user-media/${userID}/moments/` });
@@ -119,6 +144,7 @@ export default function Library() {
         setIsLoading(true);
         try {
             await createVideo();
+            await fetchLatestVideo();
         } catch (err) {
             alert("Creating Moment failed:");
         } finally {
@@ -132,6 +158,7 @@ export default function Library() {
         setIsLoading(true);
         try {
             await createVideo();
+            await fetchLatestVideo();
         } catch (err) {
             alert("Creating Moment failed:");
         } finally {
@@ -223,7 +250,7 @@ export default function Library() {
                 </div>
             </div>
             <button className="submit_button"  onClick={handleSubmit}> Submit </button>
-            <PreviewMoment isOpen={isPreviewOpen} onClose={closePreview} onRedo={handleRedo} onSave={handleSave} />
+            <PreviewMoment isOpen={isPreviewOpen} moment={moment} onClose={closePreview} onRedo={handleRedo} onSave={handleSave} />
             {isLoading && (
             <div className="loading-overlay">
                 <div className="spinner" />
