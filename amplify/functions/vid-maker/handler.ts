@@ -72,7 +72,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         console.log("Processed files:", processedFiles);
 
         console.log("Merging media files...");
-        const finalPath = await mergeMedia(processedFiles, `final_video_${randomUUID()}.mp4`, song);
+        const finalPath = await mergeMedia(processedFiles, `final_video_${randomUUID()}.mp4`, `${song}.mp3`);
         console.log("Merged video path:", finalPath);
 
         const finalFullPath = path.join(TMP_DIR, finalPath);
@@ -199,7 +199,7 @@ function shuffleArray(array: string[]): string[] {
             .input(tempListFile)
             .inputOptions(["-f", "concat", "-safe", "0"]);
 
-        if (songFile != "undefined" && songFile) {
+        if (songFile && songFile != "undefined" && songFile != ".mp3") {
             ffmpegCommand = ffmpegCommand
                 .input(path.join(TMP_DIR, songFile))
                 .audioCodec("aac")
@@ -272,14 +272,16 @@ export async function downloadAllMediaFromS3(userID: string, song?: string): Pro
     }
     
     console.log("Downloaded files:", downloadedFiles);
-    if (!song || song === "undefined" ) {
+    if (!song || song === "undefined" || song === "") {
         console.log("No song provided, skipping download.");
         return downloadedFiles;
     }
     console.log("Downloading song:", song);
 
-    const songKey = `user-media/${userID}/audio/${song}`;
-    const songPath = path.join(TMP_DIR, song);
+    const songFileName = `${song}.mp3`;
+
+    const songKey = `user-media/${userID}/audio/${songFileName}`;
+    const songPath = path.join(TMP_DIR, songFileName);
 
     try {
         console.log(`Downloading song from S3: ${songKey}`);
