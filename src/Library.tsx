@@ -10,13 +10,14 @@ export default function Library() {
     const [activeTab, setActiveTab] = useState("Photos");
     const [userID, setUserID] = useState<string | null>(null);
     const [photos, setPhotos] = useState<URL[]>([]);
-    const [selectedPhotos, setSelectedPhotos] = useState<URL[]>([]);
+    const [selectedDeletion, setSelectedDeletion] = useState<URL[]>([]);
     const [videos, setVideos] = useState<URL[]>([]);
     const [songs, setSongs] = useState<{ name: string; url: URL }[]>([]);
     const [moments, setMoments] = useState<URL[]>([]);
     
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
+        setSelectedDeletion([]);
     }
     
     //Upon Loading
@@ -86,31 +87,32 @@ export default function Library() {
     };
 
     //Delete
-    const togglePhotoSelection = (photo: URL) => {
-        setSelectedPhotos((prev) => {
-            if (prev.includes(photo)) {
-                return prev.filter((p) => p !== photo);
+    const toggleDeleteSelection = (media: URL) => {
+        setSelectedDeletion((prev) => {
+            if (prev.includes(media)) {
+                return prev.filter((p) => p !== media);
             } else {
-                return [...prev, photo];
+                return [...prev, media];
             }
         });
     };    
 
     const handleDeleteClick = async () => {
-        if (activeTab === "Photos" && selectedPhotos.length > 0) {
-            try {
-                for (const photoUrl of selectedPhotos) {
-                    const url = new URL(photoUrl.toString());
-                    const keyMatch = url.pathname.match(/user-media\/.+/);
-                    if (keyMatch) {
-                        await remove({ path: keyMatch[0] });
-                    }
+        if (selectedDeletion.length === 0) return;
+    
+        try {
+            for (const fileUrl of selectedDeletion) {
+                const url = new URL(fileUrl.toString());
+                const keyMatch = url.pathname.match(/user-media\/.+/);
+                if (keyMatch) {
+                    await remove({ path: keyMatch[0] });
                 }
-                fetchMedia();
-                setSelectedPhotos([]);
-            } catch (error) {
-                console.error("Error deleting photos:", error);
             }
+    
+            await fetchMedia();
+            setSelectedDeletion([]);
+        } catch (error) {
+            console.error(`Error deleting items from ${activeTab}:`, error);
         }
     };
 
@@ -151,7 +153,7 @@ export default function Library() {
                 console.error("Error uploading media:", error);
             }
             
-            fetchMedia();
+            await fetchMedia();
         }
     };
 
@@ -167,9 +169,11 @@ export default function Library() {
                 <span className="media_bar"> | </span>
                 <span className={`media_clickable_word ${activeTab === 'Moments' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Moments')}> Moments </span>
                 <div className="right_buttons">
-                    <button className="delete_button" onClick={handleDeleteClick}>
-                        <i className="fas fa-trash"></i>
-                    </button>
+                    {selectedDeletion.length > 0 && (
+                        <button className="delete_button" onClick={handleDeleteClick}>
+                            <i className="fas fa-trash"></i>
+                        </button>
+                    )}
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -184,17 +188,17 @@ export default function Library() {
             <div className="media_grid">
                 {activeTab === "Photos" && (
                     photos.map((src, index) => (
-                        <img
-                            key={index}
-                            src={src.toString()}
-                            className={`media_item ${selectedPhotos.includes(src) ? 'selected' : ''}`}
-                            onClick={() => togglePhotoSelection(src)}
+                        <img key={index} src={src.toString()}
+                            className={`media_item ${selectedDeletion.includes(src) ? 'selected' : ''}`}
+                            onClick={() => toggleDeleteSelection(src)}
                         />
                     ))
                 )}
                 {activeTab === "Videos" && (
                     videos.map((src, index) => (
-                        <video key={index} className="media_item" controls>
+                        <video key={index} 
+                            className={`media_item ${selectedDeletion.includes(src) ? 'selected' : ''}`}
+                            onClick={() => toggleDeleteSelection(src)} controls>
                             <source src={src.toString()} type="video/mp4" />
                         </video>
                     ))
@@ -202,18 +206,25 @@ export default function Library() {
                 {activeTab === "Songs" && (
                     <div className="song-column">
                         {songs.map((song, index) => (
-                            <div key={index} className="song-item">
-                            <p className="song-name">{song.name}</p>
-                            <audio className="media_item_audio" controls>
-                                <source src={song.url.toString()} type="audio/mp3" />
-                            </audio>
+                            <div key={index}
+                                className={`song-item ${selectedDeletion.includes(song.url) ? 'selected' : ''}`}
+                                onClick={() => toggleDeleteSelection(song.url)}
+                            >
+                                <p className="song-name">{song.name}</p>
+                                <audio className="media_item_audio" controls>
+                                    <source src={song.url.toString()} type="audio/mp3" />
+                                </audio>
                             </div>
                         ))}
                     </div>
                 )}
                 {activeTab === "Moments" && (
                     moments.map((src, index) => (
-                        <video key={index} className="media_item" controls>
+                        <video
+                            key={index}
+                            className={`media_item ${selectedDeletion.includes(src) ? 'selected' : ''}`}
+                            onClick={() => toggleDeleteSelection(src)}
+                        >
                             <source src={src.toString()} type="video/mp4" />
                         </video>
                     ))
