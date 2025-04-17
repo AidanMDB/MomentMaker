@@ -56,15 +56,11 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
     console.log("Time Limit:", timeLimit);
 
     const song = event.queryStringParameters?.song;
-    if (!song) {
-        console.error("Missing song parameter");
-        return { statusCode: 400, body: JSON.stringify({ error: "Missing song parameter" }) };
-    }
     console.log("Song:", song);
 
     try {
         console.log("Downloading all media for userID:", userID);
-        const downloadedFiles = await downloadAllMediaFromS3(userID);
+        const downloadedFiles = await downloadAllMediaFromS3(userID, song);
         if (downloadedFiles.length === 0) {
             console.warn("No media files found for userID:", userID);
             return { statusCode: 404, body: JSON.stringify({ error: "No media files found" }) };
@@ -76,7 +72,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         console.log("Processed files:", processedFiles);
 
         console.log("Merging media files...");
-        const finalPath = await mergeMedia(processedFiles, `final_video_${randomUUID()}.mp4`);
+        const finalPath = await mergeMedia(processedFiles, `final_video_${randomUUID()}.mp4`, song);
         console.log("Merged video path:", finalPath);
 
         const finalFullPath = path.join(TMP_DIR, finalPath);
@@ -193,16 +189,35 @@ function shuffleArray(array: string[]): string[] {
     return arr;
   }  
 
-function mergeMedia(clips: string[], outputPath: string): Promise<string> {
+  function mergeMedia(clips: string[], outputPath: string, songFile?: string): Promise<string> {
     console.log("Merging media clips:", clips);
     return new Promise((resolve, reject) => {
         const tempListFile = path.join(TMP_DIR, "input.txt");
         fs.writeFileSync(tempListFile, clips.map(f => `file '${path.join(TMP_DIR, f)}'`).join("\n"));
 
-        ffmpeg()
+        let ffmpegCommand = ffmpeg()
             .input(tempListFile)
-            .inputOptions(["-f", "concat", "-safe", "0"])
-            .outputOptions(['-preset', 'ultrafast', '-t', `${TOTAL_VIDEO_DURATION}`])
+            .inputOptions(["-f", "concat", "-safe", "0"]);
+
+        if (songFile != "undefined" && songFile) {
+            ffmpegCommand = ffmpegCommand
+                .input(path.join(TMP_DIR, songFile))
+                .audioCodec("aac")
+                .outputOptions([
+                    '-preset', 'ultrafast',
+                    '-t', `${TOTAL_VIDEO_DURATION}`,
+                    '-shortest', // ensure the output duration matches the shortest stream
+                    '-map', '0:v:0', // video from first input
+                    '-map', '1:a:0', // audio from second input (song)
+                ]);
+        } else {
+            ffmpegCommand = ffmpegCommand.outputOptions([
+                '-preset', 'ultrafast',
+                '-t', `${TOTAL_VIDEO_DURATION}`,
+            ]);
+        }
+
+        ffmpegCommand
             .output(path.join(TMP_DIR, outputPath))
             .on("end", () => {
                 console.log(`Media merged successfully: ${outputPath}`);
@@ -216,7 +231,8 @@ function mergeMedia(clips: string[], outputPath: string): Promise<string> {
     });
 }
 
-export async function downloadAllMediaFromS3(userID: string): Promise<string[]> {
+
+export async function downloadAllMediaFromS3(userID: string, song?: string): Promise<string[]> {
     console.log("Downloading all media from S3 for userID:", userID);
     const downloadedFiles: string[] = [];
     const prefixes = [`user-media/${userID}/image/`, `user-media/${userID}/video/`];
@@ -254,7 +270,32 @@ export async function downloadAllMediaFromS3(userID: string): Promise<string[]> 
         console.error("Error downloading files:", error);
         return [];
     }
-
+    
     console.log("Downloaded files:", downloadedFiles);
+    if (!song || song === "undefined" ) {
+        console.log("No song provided, skipping download.");
+        return downloadedFiles;
+    }
+    console.log("Downloading song:", song);
+
+    const songKey = `user-media/${userID}/audio/${song}`;
+    const songPath = path.join(TMP_DIR, song);
+
+    try {
+        console.log(`Downloading song from S3: ${songKey}`);
+        const getSong = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: songKey });
+        const { Body: songBody } = await s3Client.send(getSong);
+
+        if (songBody) {
+            const songWriteStream = fs.createWriteStream(songPath);
+            await pipe(songBody as NodeJS.ReadableStream, songWriteStream);
+            console.log(`Song downloaded to: ${songPath}`);
+        } else {
+            throw new Error("No body in song response");
+        }
+    } catch (error) {
+        console.error("Failed to download song:", error);
+    }
+
     return downloadedFiles;
 }
