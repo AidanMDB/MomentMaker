@@ -14,6 +14,7 @@ export default function Library() {
     const [videos, setVideos] = useState<URL[]>([]);
     const [songs, setSongs] = useState<{ name: string; url: URL }[]>([]);
     const [moments, setMoments] = useState<URL[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
     
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
@@ -109,7 +110,7 @@ export default function Library() {
                 }
             }
     
-            await fetchMedia();
+            fetchMedia();
             setSelectedDeletion([]);
         } catch (error) {
             console.error(`Error deleting items from ${activeTab}:`, error);
@@ -120,6 +121,7 @@ export default function Library() {
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "video/mp4", "audio/mp3", "audio/mpeg"];
 
     const handleUploadClick = () => {
+        if (isUploading) return;
         if (fileInputRef.current) {
             fileInputRef.current.click();
         }
@@ -136,6 +138,7 @@ export default function Library() {
 
             const type = (file.type).split('/')[0];
 
+            setIsUploading(true);
             try {
                 await uploadData({
                     path: `user-media/${userID}/${type}/${file.name}`,
@@ -149,13 +152,17 @@ export default function Library() {
                     }
                 });
 
+                await new Promise(resolve => setTimeout(resolve, 1000));
             } catch (error) {
                 console.error("Error uploading media:", error);
+            } finally {
+                setIsUploading(false);
             }
-            
-            await fetchMedia();
+            fetchMedia();
+            event.target.value = "";
         }
     };
+    
 
     //HTML
     return (
@@ -180,8 +187,8 @@ export default function Library() {
                         style={{ display: "none" }}
                         onChange={handleFileChange}
                     />
-                    <button className="upload_button" onClick={handleUploadClick}>
-                        <i className="fas fa-upload"></i>
+                    <button className="upload_button" onClick={handleUploadClick} disabled={isUploading}>
+                        {isUploading ? <i className="fas fa-spinner fa-spin" /> : <i className="fas fa-upload" />}
                     </button>
                 </div>
             </div> 
