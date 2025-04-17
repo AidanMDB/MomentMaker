@@ -5,17 +5,14 @@ import "./AllStyles.css"
 import "./Library.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-import demo_video from "/RPReplay_Final1741140628.mp4";
-
 export default function Library() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState("Photos");
     const [userID, setUserID] = useState<string | null>(null);
     const [photos, setPhotos] = useState<URL[]>([]);
     const [videos, setVideos] = useState<URL[]>([]);
-    const [songs, setSongs] = useState<URL[]>([]);
-
-    const moments = [ demo_video ];
+    const [songs, setSongs] = useState<{ name: string; url: URL }[]>([]);
+    const [moments, setMoments] = useState<URL[]>([]);
     
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
@@ -83,6 +80,7 @@ export default function Library() {
             const { items: photoResults } = await list({ path: `user-media/${userID}/image/` });
             const { items: videoResults } = await list({ path: `user-media/${userID}/video/` });
             const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
+            const { items: momementResults } = await list({ path: `user-media/${userID}/moments/` });
 
             const photoUrls = await Promise.all(
                 photoResults.map(async (file) => {
@@ -99,6 +97,15 @@ export default function Library() {
             const songUrls = await Promise.all(
                 songResults.map(async (file) => {
                     const urlOutput = await getUrl({ path: file.path });
+                    const fullPathParts = file.path.split("/");
+                    const fullFileName = fullPathParts[fullPathParts.length - 1];
+                    const songName = fullFileName.replace(/\.[^/.]+$/, "");
+                    return { name: songName || "Untitled", url: urlOutput.url };
+                  })
+            );
+            const momentUrls = await Promise.all(
+                momementResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
                     return urlOutput.url;
                 })
             );
@@ -106,6 +113,7 @@ export default function Library() {
             setPhotos(photoUrls);
             setVideos(videoUrls);
             setSongs(songUrls);
+            setMoments(momentUrls);
         } catch (error) {
             console.error("Error fetching media:", error);
         }
@@ -146,11 +154,16 @@ export default function Library() {
                     ))
                 )}
                 {activeTab === "Songs" && (
-                    songs.map((src, index) => (
-                        <audio key={index} className="media_item_audio" controls>
-                            <source src={src.toString()} type="audio/mp3" />
-                        </audio>
-                    ))
+                    <div className="song-column">
+                        {songs.map((song, index) => (
+                            <div key={index} className="song-item">
+                            <p className="song-name">{song.name}</p>
+                            <audio className="media_item_audio" controls>
+                                <source src={song.url.toString()} type="audio/mp3" />
+                            </audio>
+                            </div>
+                        ))}
+                    </div>
                 )}
                 {activeTab === "Moments" && (
                     moments.map((src, index) => (
