@@ -7,7 +7,6 @@ import { promisify } from "util";
 import * as path from "path";
 import { randomUUID } from "crypto";
 import ffmpeg from "fluent-ffmpeg";
-import { time } from "console";
 
 ffmpeg.setFfmpegPath("/opt/ffmpeglib/ffmpeg"); // For Lambda Layer or bundled binary
 
