@@ -17,7 +17,7 @@ export default function Library() {
     const [songs, setSongs] = useState<string[]>([]);
     const [people, setPeople] = useState<URL[]>([]);
     const [selectedPersons, setSelectedPersons] = useState<string[]>([]);
-    const [selectedSong, setSelectedSong] = useState("Upload Songs");
+    const [selectedSong, setSelectedSong] = useState<string | undefined>(undefined);
     const [selectedTime, setSelectedTime] = useState<number>(60);
     const [isLoading, setIsLoading] = useState(false);
     const [moment, setMoment] = useState<string | undefined>(undefined);
@@ -36,7 +36,9 @@ export default function Library() {
                 const pathParts = file.path.split('/');
                 return pathParts[pathParts.length - 1].replace(/\.[^/.]+$/, "");
             });
-            setSongs(songNames);
+            const songsWithEmpty = ["", ...songNames];
+            setSongs(songsWithEmpty);
+            setSelectedSong(songNames[0])
         } catch (error) {
             console.error("Error fetching media:", error);
         }
