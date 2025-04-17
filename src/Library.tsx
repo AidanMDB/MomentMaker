@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { uploadData, list, getUrl, remove } from 'aws-amplify/storage';
 import { getCurrentUser } from 'aws-amplify/auth';
 import "./AllStyles.css"
@@ -24,11 +24,56 @@ export default function Library() {
         fetchUser();
     }, []);
     
+    const fetchMedia = useCallback(async () => {
+        if (!userID) return;
+        try {
+            const { items: photoResults } = await list({ path: `user-media/${userID}/image/` });
+            const { items: videoResults } = await list({ path: `user-media/${userID}/video/` });
+            const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
+            const { items: momentResults } = await list({ path: `user-media/${userID}/moments/` });
+
+            const photoUrls = await Promise.all(
+                photoResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    return urlOutput.url;
+                })
+            );
+            const videoUrls = await Promise.all(
+                videoResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    return urlOutput.url;
+                })
+            );
+            const songUrls = await Promise.all(
+                songResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    const fullPathParts = file.path.split("/");
+                    const fullFileName = fullPathParts[fullPathParts.length - 1];
+                    const songName = fullFileName.replace(/\.[^/.]+$/, "");
+                    return { name: songName || "Untitled", url: urlOutput.url };
+                  })
+            );
+            const momentUrls = await Promise.all(
+                momentResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    return urlOutput.url;
+                })
+            );
+
+            setPhotos(photoUrls);
+            setVideos(videoUrls);
+            setSongs(songUrls);
+            setMoments(momentUrls);
+        } catch (error) {
+            console.error("Error fetching media:", error);
+        }
+      }, [userID]);
+
     useEffect(() => {
         if (userID) {
             fetchMedia();
         }
-    }, [userID]);
+    }, [userID, fetchMedia]);
     
 
     const fetchUser = async () => {
@@ -109,50 +154,6 @@ export default function Library() {
             fetchMedia();
         }
     };
-
-    const fetchMedia = async () => {
-        try {
-            const { items: photoResults } = await list({ path: `user-media/${userID}/image/` });
-            const { items: videoResults } = await list({ path: `user-media/${userID}/video/` });
-            const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
-            const { items: momementResults } = await list({ path: `user-media/${userID}/moments/` });
-
-            const photoUrls = await Promise.all(
-                photoResults.map(async (file) => {
-                    const urlOutput = await getUrl({ path: file.path });
-                    return urlOutput.url;
-                })
-            );
-            const videoUrls = await Promise.all(
-                videoResults.map(async (file) => {
-                    const urlOutput = await getUrl({ path: file.path });
-                    return urlOutput.url;
-                })
-            );
-            const songUrls = await Promise.all(
-                songResults.map(async (file) => {
-                    const urlOutput = await getUrl({ path: file.path });
-                    const fullPathParts = file.path.split("/");
-                    const fullFileName = fullPathParts[fullPathParts.length - 1];
-                    const songName = fullFileName.replace(/\.[^/.]+$/, "");
-                    return { name: songName || "Untitled", url: urlOutput.url };
-                  })
-            );
-            const momentUrls = await Promise.all(
-                momementResults.map(async (file) => {
-                    const urlOutput = await getUrl({ path: file.path });
-                    return urlOutput.url;
-                })
-            );
-
-            setPhotos(photoUrls);
-            setVideos(videoUrls);
-            setSongs(songUrls);
-            setMoments(momentUrls);
-        } catch (error) {
-            console.error("Error fetching media:", error);
-        }
-      };
 
     //HTML
     return (
