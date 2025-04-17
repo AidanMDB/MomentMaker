@@ -289,8 +289,11 @@ async function getVideoFaces(jobID: string) {
 export const handler: SNSHandler = async (event: SNSEvent) => {
     for (const record of event.Records) {
         const message = record.Sns.Message;
-        if (message)
         console.log(`Received message: ${record.Sns.Message}`);
+        if (message.Status === "SUCCEEDED") {
+            getVideoFaces()
+        
+        }
         getVideoFaces(record.Sns)
     }
 };
