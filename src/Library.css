@@ -78,59 +78,21 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     height: auto;
-}
-
-.media_item {
+  }
+  
+  .media_item {
     width: 150px;
     height: 150px;
     border-radius: 10px;
     object-fit: cover;
     display: block;
     margin: 10px;
-    cursor: pointer;
-}
-
-.media_item.selected {
-    outline: 4px solid var(--light-purple);
-    opacity: 0.8;
-}
-
-.song-column {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-    grid-column: span 10;
-}
-
-.song-item {
-    background-color: var(--dark-gray);
-    border-radius: 4px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: -10px;
-    width: 100%;
-    cursor: pointer;
-}
-
-.song-name {
-    width: auto;
-    font-size: 18px;
-    font-weight: bold;
-    margin-left: 15px;
-    margin-right: 20px;
-    text-align: left;
 }
 
 .media_item_audio {
-    width: 500px;
+    width: 150px;
     border-radius: 10px;
     object-fit: cover;
     display: block;
-}
-
-.song-item.selected {
-    outline: 2px solid var(--light-purple);
-    opacity: 0.8;
+    color: var(--light-gray);
 }

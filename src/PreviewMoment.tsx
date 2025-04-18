@@ -1,5 +1,11 @@
 import './PreviewMoment.css';
 import "./AllStyles.css"
+<<<<<<< HEAD
+=======
+import { useEffect, useState } from "react";
+import { getCurrentUser } from 'aws-amplify/auth';
+import { list, getUrl } from 'aws-amplify/storage';
+>>>>>>> origin/main
 import { useNavigate } from "react-router-dom"
 
 interface ModalProps {
@@ -10,8 +16,16 @@ interface ModalProps {
   onSave: () => void;
 }
 
+<<<<<<< HEAD
 const Modal: React.FC<ModalProps> = ({ isOpen, moment, onClose, onRedo, onSave }) => {
 
+=======
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
+
+  const [userID, setUserID] = useState<string | null>(null);
+  const [moment, setMoment] = useState<string | undefined>(undefined);
+   
+>>>>>>> origin/main
   const navigate = useNavigate();
 
   const handleRedo = () => {
@@ -20,12 +34,59 @@ const Modal: React.FC<ModalProps> = ({ isOpen, moment, onClose, onRedo, onSave }
 
   const handleSave = () => {
     onSave();
+<<<<<<< HEAD
+=======
+    onClose();
+>>>>>>> origin/main
     navigate("/all", {
       state: { activeTab: "library" }
     });
   };
 
+<<<<<<< HEAD
   if (!isOpen) return null;
+=======
+  useEffect(() => {
+      if (!isOpen) return;
+      fetchUser();
+      fetchLatestVideo();
+    });
+
+  if (!isOpen) return null;
+  
+  const fetchUser = async () => {
+      try {
+          const user = await getCurrentUser();
+          setUserID(user.userId);
+      } catch (error) {
+          console.error("Error fetching user:", error);
+      }
+  };
+
+  const fetchLatestVideo = async () => {
+    try {
+        const { items: videoResults } = await list({ path: `user-media/${userID}/moments/` });
+
+        if (!videoResults.length) {
+            setMoment("");
+            return;
+        }
+
+        const sortedVideos = videoResults
+            .filter(file => file?.lastModified)
+            .sort((a, b) =>
+              new Date(b?.lastModified ?? 0).getTime() - new Date(a?.lastModified ?? 0).getTime()
+            );
+            
+        const latestVideo = sortedVideos[0];
+        const urlOutput = await getUrl({ path: latestVideo.path });
+        
+        setMoment(urlOutput.url.toString());
+    } catch (error) {
+        console.error("Error fetching latest video:", error);
+    }
+};
+>>>>>>> origin/main
 
   return (
     <div className="modal-overlay">
