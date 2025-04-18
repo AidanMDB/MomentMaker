@@ -78,9 +78,9 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     height: auto;
-}
-
-.media_item {
+  }
+  
+  .media_item {
     width: 150px;
     height: 150px;
     border-radius: 10px;
