@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { uploadData, list, getUrl } from 'aws-amplify/storage';
 import { getCurrentUser } from 'aws-amplify/auth';
 import "./AllStyles.css"
@@ -17,71 +17,16 @@ export default function Library() {
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
     }
-    
-    //Upon Loading
-    useEffect(() => {
-        fetchUser();
-        fetchMedia();
-    });
 
-    const fetchUser = async () => {
-        try {
-            const user = await getCurrentUser();
-            setUserID(user.userId);
-        } catch (error) {
-            console.error("Error fetching user:", error);
-        }
-    };
+    const fetchMedia = useCallback(async () => {
+        if (!userID) return;
 
-
-    //Upload
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "video/mp4", "audio/mp3", "audio/mpeg"];
-
-    const handleUploadClick = () => {
-        if (fileInputRef.current) {
-            fileInputRef.current.click();
-        }
-    };
-
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files && event.target.files[0]) {
-            const file = event.target.files[0];
-
-            if (!allowedTypes.includes(file.type)) {
-                alert("Invalid file type. Please select a JPEG, PNG, MP4, or MP3 file.");
-                return;
-            }
-
-            const type = (file.type).split('/')[0];
-
-            try {
-                await uploadData({
-                    path: `user-media/${userID}/${type}/${file.name}`,
-                    data: file,
-                    options: {
-                        bucket: 'MediaStorage',
-                        metadata: {
-                            fileType: `${file.type}`,
-                            userID: `${userID}`
-                        }
-                    }
-                });
-
-            } catch (error) {
-                console.error("Error uploading media:", error);
-            }
-            
-            fetchMedia();
-        }
-    };
-
-    const fetchMedia = async () => {
         try {
             const { items: photoResults } = await list({ path: `user-media/${userID}/image/` });
             const { items: videoResults } = await list({ path: `user-media/${userID}/video/` });
             const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
-            const { items: momementResults } = await list({ path: `user-media/${userID}/moments/` });
-
+            const { items: momentResults } = await list({ path: `user-media/${userID}/moments/` });
+    
             const photoUrls = await Promise.all(
                 photoResults.map(async (file) => {
                     const urlOutput = await getUrl({ path: file.path });
@@ -101,10 +46,10 @@ export default function Library() {
                     const fullFileName = fullPathParts[fullPathParts.length - 1];
                     const songName = fullFileName.replace(/\.[^/.]+$/, "");
                     return { name: songName || "Untitled", url: urlOutput.url };
-                  })
+                })
             );
             const momentUrls = await Promise.all(
-                momementResults.map(async (file) => {
+                momentResults.map(async (file) => {
                     const urlOutput = await getUrl({ path: file.path });
                     return urlOutput.url;
                 })
@@ -117,8 +62,75 @@ export default function Library() {
         } catch (error) {
             console.error("Error fetching media:", error);
         }
-      };
+    }, [userID]);
+    
+    
+    //Upon Loading
+    useEffect(() => {
+        const init = async () => {
+            await fetchUser();
+        };
+    
+        init();
+    }, []);
 
+    useEffect(() => {
+        if (userID) {
+            fetchMedia();
+        }
+    }, [userID, fetchMedia]);
+
+    const fetchUser = async () => {
+        try {
+            const user = await getCurrentUser();
+            setUserID(user.userId);
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    };
+
+    //Upload
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "video/mp4", "audio/mp3", "audio/mpeg"];
+
+    const handleUploadClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            const file = event.target.files[0];
+    
+            if (!allowedTypes.includes(file.type)) {
+                alert("Invalid file type. Please select a JPEG, PNG, MP4, or MP3 file.");
+                return;
+            }
+    
+            const type = (file.type).split('/')[0];
+    
+            try {
+                await uploadData({
+                    path: `user-media/${userID}/${type}/${file.name}`,
+                    data: file,
+                    options: {
+                        bucket: 'MediaStorage',
+                        metadata: {
+                            fileType: `${file.type}`,
+                            userID: `${userID}`
+                        }
+                    }
+                });
+    
+                setTimeout(async () => {
+                    await fetchMedia();
+                }, 1000);
+            } catch (error) {
+                console.error("Error uploading media:", error);
+            }
+        }
+    };
+    
     //HTML
     return (
         <div className="media_container">

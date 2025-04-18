@@ -1,6 +1,6 @@
 import './PreviewMoment.css';
 import "./AllStyles.css"
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getCurrentUser } from 'aws-amplify/auth';
 import { list, getUrl } from 'aws-amplify/storage';
 import { useNavigate } from "react-router-dom"
@@ -32,24 +32,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
     });
   };
 
-  useEffect(() => {
-      if (!isOpen) return;
-      fetchUser();
-      fetchLatestVideo();
-    });
-
-  if (!isOpen) return null;
-  
-  const fetchUser = async () => {
-      try {
-          const user = await getCurrentUser();
-          setUserID(user.userId);
-      } catch (error) {
-          console.error("Error fetching user:", error);
-      }
-  };
-
-  const fetchLatestVideo = async () => {
+  const fetchLatestVideo = useCallback(async () => {
     try {
         const { items: videoResults } = await list({ path: `user-media/${userID}/moments/` });
 
@@ -71,7 +54,33 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
     } catch (error) {
         console.error("Error fetching latest video:", error);
     }
-};
+  }, [userID]);
+
+    useEffect(() => {
+      if (!isOpen) return;
+      const init = async () => {
+          await fetchUser();
+      };
+
+      init();
+  }, []);
+
+  useEffect(() => {
+    if (userID) {
+        fetchLatestVideo();
+    }
+  }, [userID, fetchLatestVideo]);
+
+  if (!isOpen) return null;
+  
+  const fetchUser = async () => {
+      try {
+          const user = await getCurrentUser();
+          setUserID(user.userId);
+      } catch (error) {
+          console.error("Error fetching user:", error);
+      }
+  };
 
   return (
     <div className="modal-overlay">
