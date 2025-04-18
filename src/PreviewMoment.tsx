@@ -7,26 +7,22 @@ import { useNavigate } from "react-router-dom"
 
 interface ModalProps {
   isOpen: boolean;
+  moment: string | undefined;
   onClose: () => void;
   onRedo: () => void;
   onSave: () => void;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, moment, onClose, onRedo, onSave }) => {
 
-  const [userID, setUserID] = useState<string | null>(null);
-  const [moment, setMoment] = useState<string | undefined>(undefined);
-   
   const navigate = useNavigate();
 
   const handleRedo = () => {
     onRedo(); 
-    onClose();
   };
 
   const handleSave = () => {
     onSave();
-    onClose();
     navigate("/all", {
       state: { activeTab: "library" }
     });
