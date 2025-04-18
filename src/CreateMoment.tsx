@@ -17,9 +17,10 @@ export default function Library() {
     const [songs, setSongs] = useState<string[]>([]);
     const [people, setPeople] = useState<URL[]>([]);
     const [selectedPersons, setSelectedPersons] = useState<string[]>([]);
-    const [selectedSong, setSelectedSong] = useState("Upload Songs");
+    const [selectedSong, setSelectedSong] = useState<string | undefined>(undefined);
     const [selectedTime, setSelectedTime] = useState<number>(60);
     const [isLoading, setIsLoading] = useState(false);
+    const [moment, setMoment] = useState<string | undefined>(undefined);
 
     const openPreview = () => setPreviewOpen(true);
     const closePreview = async () => {
@@ -35,7 +36,9 @@ export default function Library() {
                 const pathParts = file.path.split('/');
                 return pathParts[pathParts.length - 1].replace(/\.[^/.]+$/, "");
             });
-            setSongs(songNames);
+            const songsWithEmpty = ["", ...songNames];
+            setSongs(songsWithEmpty);
+            setSelectedSong(songNames[0])
         } catch (error) {
             console.error("Error fetching media:", error);
         }
@@ -58,7 +61,11 @@ export default function Library() {
     }, [userID]);
 
     useEffect(() => {
-        fetchUser();
+        const init = async () => {
+            await fetchUser();
+        };
+    
+        init();
     }, []);
     
     useEffect(() => {
@@ -82,7 +89,7 @@ export default function Library() {
         //API CALL
         try {
             // Send a GET request to the Lambda function URL with the query string
-            const response = await fetch(`${LAMBDA_URL}?userID=${userID}`);
+            const response = await fetch(`${LAMBDA_URL}?userID=${userID}&timeLimit=${selectedTime}&song=${selectedSong}`);
             if (response.ok) {
                 const data = await response.json();
                 console.log('Lambda response:', data);
@@ -93,6 +100,30 @@ export default function Library() {
             console.error('Error calling Lambda:', error);
         }
     }
+
+    const fetchLatestVideo = async () => {
+        try {
+            const { items: videoResults } = await list({ path: `user-media/${userID}/moments/` });
+    
+            if (!videoResults.length) {
+                setMoment("");
+                return;
+            }
+    
+            const sortedVideos = videoResults
+                .filter(file => file?.lastModified)
+                .sort((a, b) =>
+                new Date(b?.lastModified ?? 0).getTime() - new Date(a?.lastModified ?? 0).getTime()
+                );
+                
+            const latestVideo = sortedVideos[0];
+            const urlOutput = await getUrl({ path: latestVideo.path });
+            
+            setMoment(urlOutput.url.toString());
+        } catch (error) {
+            console.error("Error fetching latest video:", error);
+        }
+    };
 
     const handleDeleteMoment = async () => {
         try {
@@ -119,6 +150,7 @@ export default function Library() {
         setIsLoading(true);
         try {
             await createVideo();
+            await fetchLatestVideo();
         } catch (err) {
             alert("Creating Moment failed:");
         } finally {
@@ -132,13 +164,14 @@ export default function Library() {
         setIsLoading(true);
         try {
             await createVideo();
+            await fetchLatestVideo();
         } catch (err) {
             alert("Creating Moment failed:");
         } finally {
             setIsLoading(false);
         }
         openPreview();
-      };
+    };
     
     const handleSave = () => {
         setPreviewOpen(false);
@@ -223,7 +256,7 @@ export default function Library() {
                 </div>
             </div>
             <button className="submit_button"  onClick={handleSubmit}> Submit </button>
-            <PreviewMoment isOpen={isPreviewOpen} onClose={closePreview} onRedo={handleRedo} onSave={handleSave} />
+            <PreviewMoment isOpen={isPreviewOpen} moment={moment} onClose={closePreview} onRedo={handleRedo} onSave={handleSave} />
             {isLoading && (
             <div className="loading-overlay">
                 <div className="spinner" />
@@ -233,3 +266,6 @@ export default function Library() {
         </div>
     );
 }
+
+
+
