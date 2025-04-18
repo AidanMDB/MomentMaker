@@ -7,6 +7,10 @@ import { v4 as uuidv4 } from "uuid";
 const s3Client = new S3Client();
 //const allowedFileTypes = ['.jpg', '.jpeg', '.png', '.mp4'];
 const userID = "user1";
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+const VIDEO_EXTENSIONS = ['mp4', 'mov', 'avi', 'mkv'];
+const AUDIO_EXTENSIONS = ['mp3', 'mpeg'];
 
 async function streamToBuffer(stream: Readable): Promise<Buffer> {
     const chunks: Uint8Array[] = [];
@@ -63,26 +67,44 @@ export const handler: Handler = async (event) => {
     const zipEntries = zip.getEntries();
 
     for (const zipEntry of zipEntries) {
-        const fileName = zipEntry.entryName;
-        const fileExtension = fileName.split('.').pop();
+
+        if (zipEntry.isDirectory) {
+            continue; // Skip directories
+        }
         
-        if (fileExtension === 'jpg' || fileExtension === 'jpeg' || fileExtension === 'png') {
-            const fileBuffer = zipEntry.getData();
-            const newKey = `user-media/${userID}/image/${uuidv4()}.${fileExtension}`;
-            await uploadToS3(newKey, fileBuffer);
-            console.log(`Uploaded image: ${newKey}`);
+
+        const fileName = zipEntry.entryName;
+        const fileExtension = fileName.split('.').pop()?.toLowerCase();
+        
+        if (fileExtension === undefined) {
+            console.log(`File ${fileName} has no extension.`);
+            continue; // Skip files without an extension
         }
-        else if (fileExtension === 'mp4' || fileExtension === 'mov' || fileExtension === 'avi' || fileExtension === 'mkv') {
-            const fileBuffer = zipEntry.getData();
-            const newKey = `user-media/${userID}/video/${uuidv4()}.${fileExtension}`;
-            await uploadToS3(newKey, fileBuffer);
-            console.log(`Uploaded video: ${newKey}`);
+
+        if (zipEntry.header.size > MAX_FILE_SIZE) {
+            console.log(`File ${fileName} exceeds the maximum size of ${MAX_FILE_SIZE} bytes.`);
+            continue; // Skip files that exceed the maximum size
         }
-        else if (fileExtension === 'mp3' || fileExtension === 'mpeg') {
+
+        let fileTypeFolder: string = ''
+        if (IMAGE_EXTENSIONS.includes(fileExtension)) {
+            fileTypeFolder = 'image';
+        }
+        else if (VIDEO_EXTENSIONS.includes(fileExtension)) {
+            fileTypeFolder = 'video';
+        }
+        else if (AUDIO_EXTENSIONS.includes(fileExtension)) {
+            fileTypeFolder = 'audio';
+        } else {
+            console.log(`File ${fileName} has an unsupported file type.`);
+            continue; // Skip unsupported file types
+        }
+
+        if (fileTypeFolder) {
+            const newKey = `user-media/${userID}/${fileTypeFolder}/${uuidv4()}.${fileExtension}`;
             const fileBuffer = zipEntry.getData();
-            const newKey = `user-media/${userID}/audio/${uuidv4()}.${fileExtension}`;
             await uploadToS3(newKey, fileBuffer);
-            console.log(`Uploaded audio: ${newKey}`);
+            console.log(`Uploaded ${fileName} to ${newKey}`);
         }
     }
 };
