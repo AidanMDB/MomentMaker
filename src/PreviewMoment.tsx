@@ -63,7 +63,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
       };
 
       init();
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
     if (userID) {

@@ -67,7 +67,6 @@ export default function Library() {
         }
     }, [userID]);
     
-    
     //Upon Loading
     useEffect(() => {
         const init = async () => {
@@ -158,16 +157,16 @@ export default function Library() {
                     }
                 });
 
-                setTimeout(async () => {
-                    await fetchMedia();
-                }, 1000);
+                await new Promise((resolve) => setTimeout(resolve, 3000));
+                await fetchMedia();
             } catch (error) {
                 console.error("Error uploading media:", error);
             } finally {
                 setIsUploading(false);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
             }
-            fetchMedia();
-            event.target.value = "";
         }
     };
     
