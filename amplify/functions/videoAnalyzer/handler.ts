@@ -281,20 +281,23 @@ async function getVideoFaces(jobID: string) {
     };
     const command = new GetFaceDetectionCommand(params);
     const response = await rekogClient.send(command);
-    return response.FaceDetections || [];
+    return response;
 }
 
 
 
 export const handler: SNSHandler = async (event: SNSEvent) => {
     for (const record of event.Records) {
-        const message = record.Sns.Message;
+        const message = JSON.parse(record.Sns.Message);
         console.log(`Received message: ${record.Sns.Message}`);
+
         if (message.Status === "SUCCEEDED") {
-            getVideoFaces()
-        
+            const videoResponse = await getVideoFaces(message.jobID)
+            objectKey = videoResponse.Video?.S3Object?.Name;
+            bucketName = videoResponse.Video?.S3Object?.Bucket;
         }
-        getVideoFaces(record.Sns)
+
+        userID = bucketName.split('/')[1];
     }
 };
 
