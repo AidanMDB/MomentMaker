@@ -1,6 +1,6 @@
 import './PreviewMoment.css';
 import "./AllStyles.css"
-import { useNavigate } from "react-router-dom"
+import demo_video from "/RPReplay_Final1741140628.mp4"
 
 interface ModalProps {
   isOpen: boolean;
@@ -10,9 +10,8 @@ interface ModalProps {
   onSave: () => void;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, moment, onClose, onRedo, onSave }) => {
-
-  const navigate = useNavigate();
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onRedo, onSave }) => {
+  if (!isOpen) return null;
 
   const handleRedo = () => {
     onRedo(); 
@@ -20,12 +19,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, moment, onClose, onRedo, onSave }
 
   const handleSave = () => {
     onSave();
-    navigate("/all", {
-      state: { activeTab: "library" }
-    });
+    onClose();
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">

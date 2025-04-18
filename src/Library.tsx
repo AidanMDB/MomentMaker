@@ -12,9 +12,9 @@ export default function Library() {
     const [photos, setPhotos] = useState<URL[]>([]);
     const [selectedDeletion, setSelectedDeletion] = useState<URL[]>([]);
     const [videos, setVideos] = useState<URL[]>([]);
-    const [songs, setSongs] = useState<{ name: string; url: URL }[]>([]);
-    const [moments, setMoments] = useState<URL[]>([]);
-    const [isUploading, setIsUploading] = useState(false);
+    const [songs, setSongs] = useState<URL[]>([]);
+
+    const moments = [ demo_video ];
     
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
@@ -185,16 +185,44 @@ export default function Library() {
                 await fetchMedia();
             } catch (error) {
                 console.error("Error uploading media:", error);
-            } finally {
-                setIsUploading(false);
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                }
             }
+            
+            fetchMedia();
         }
     };
-    
-    
+
+    const fetchMedia = async () => {
+        try {
+            const { items: photoResults } = await list({ path: `user-media/${userID}/image/` });
+            const { items: videoResults } = await list({ path: `user-media/${userID}/video/` });
+            const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
+
+            const photoUrls = await Promise.all(
+                photoResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    return urlOutput.url;
+                })
+            );
+            const videoUrls = await Promise.all(
+                videoResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    return urlOutput.url;
+                })
+            );
+            const songUrls = await Promise.all(
+                songResults.map(async (file) => {
+                    const urlOutput = await getUrl({ path: file.path });
+                    return urlOutput.url;
+                })
+            );
+
+            setPhotos(photoUrls);
+            setVideos(videoUrls);
+            setSongs(songUrls);
+        } catch (error) {
+            console.error("Error fetching media:", error);
+        }
+      };
 
     //HTML
     return (
@@ -243,19 +271,11 @@ export default function Library() {
                     ))
                 )}
                 {activeTab === "Songs" && (
-                    <div className="song-column">
-                        {songs.map((song, index) => (
-                            <div key={index}
-                                className={`song-item ${selectedDeletion.includes(song.url) ? 'selected' : ''}`}
-                                onClick={() => toggleDeleteSelection(song.url)}
-                            >
-                                <p className="song-name">{song.name}</p>
-                                <audio className="media_item_audio" controls>
-                                    <source src={song.url.toString()} type="audio/mp3" />
-                                </audio>
-                            </div>
-                        ))}
-                    </div>
+                    songs.map((src, index) => (
+                        <audio key={index} className="media_item_audio" controls>
+                            <source src={src.toString()} type="audio/mp3" />
+                        </audio>
+                    ))
                 )}
                 {activeTab === "Moments" && (
                     moments.map((src, index) => (
