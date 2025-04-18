@@ -20,20 +20,16 @@ export default function Library() {
         setActiveTab(option);
         setSelectedDeletion([]);
     }
-    
-    //Upon Loading
-    useEffect(() => {
-        fetchUser();
-    }, []);
-    
+
     const fetchMedia = useCallback(async () => {
         if (!userID) return;
+
         try {
             const { items: photoResults } = await list({ path: `user-media/${userID}/image/` });
             const { items: videoResults } = await list({ path: `user-media/${userID}/video/` });
             const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
             const { items: momentResults } = await list({ path: `user-media/${userID}/moments/` });
-
+    
             const photoUrls = await Promise.all(
                 photoResults.map(async (file) => {
                     const urlOutput = await getUrl({ path: file.path });
@@ -53,7 +49,7 @@ export default function Library() {
                     const fullFileName = fullPathParts[fullPathParts.length - 1];
                     const songName = fullFileName.replace(/\.[^/.]+$/, "");
                     return { name: songName || "Untitled", url: urlOutput.url };
-                  })
+                })
             );
             const momentUrls = await Promise.all(
                 momentResults.map(async (file) => {
@@ -69,7 +65,16 @@ export default function Library() {
         } catch (error) {
             console.error("Error fetching media:", error);
         }
-      }, [userID]);
+    }, [userID]);
+    
+    //Upon Loading
+    useEffect(() => {
+        const init = async () => {
+            await fetchUser();
+        };
+    
+        init();
+    }, []);
 
     useEffect(() => {
         if (userID) {
@@ -130,15 +135,20 @@ export default function Library() {
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             const file = event.target.files[0];
-
+    
             if (!allowedTypes.includes(file.type)) {
                 alert("Invalid file type. Please select a JPEG, PNG, MP4, or MP3 file.");
                 return;
             }
-
-            const type = (file.type).split('/')[0];
-
+    
+            const type = file.type.split('/')[0];
+    
+            const temp_photos = photos.length;
+            const temp_videos = videos.length;
+            const temp_songs = songs.length;
+    
             setIsUploading(true);
+    
             try {
                 await uploadData({
                     path: `user-media/${userID}/${type}/${file.name}`,
@@ -146,22 +156,44 @@ export default function Library() {
                     options: {
                         bucket: 'MediaStorage',
                         metadata: {
-                            fileType: `${file.type}`,
-                            userID: `${userID}`
+                            fileType: file.type,
+                            userID: userID || ''
                         }
                     }
                 });
-
-                await new Promise(resolve => setTimeout(resolve, 1000));
+    
+                let attempts = 0;
+                while (attempts < 10) {
+                    const [newPhotos, newVideos, newSongs] = await Promise.all([
+                        list({ path: `user-media/${userID}/image/` }),
+                        list({ path: `user-media/${userID}/video/` }),
+                        list({ path: `user-media/${userID}/audio/` }),
+                        list({ path: `user-media/${userID}/moments/` })
+                    ]);
+    
+                    const hasChanged =
+                        newPhotos.items.length > temp_photos ||
+                        newVideos.items.length > temp_videos ||
+                        newSongs.items.length > temp_songs;
+    
+                    if (hasChanged) break;
+    
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                    attempts++;
+                }
+    
+                await fetchMedia();
             } catch (error) {
                 console.error("Error uploading media:", error);
             } finally {
                 setIsUploading(false);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
             }
-            fetchMedia();
-            event.target.value = "";
         }
     };
+    
     
 
     //HTML

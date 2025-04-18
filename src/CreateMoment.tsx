@@ -61,7 +61,11 @@ export default function Library() {
     }, [userID]);
 
     useEffect(() => {
-        fetchUser();
+        const init = async () => {
+            await fetchUser();
+        };
+    
+        init();
     }, []);
     
     useEffect(() => {
