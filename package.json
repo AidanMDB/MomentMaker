@@ -17,6 +17,7 @@
     "@aws-amplify/ui-react-storage": "^3.7.2",
     "@aws-sdk/client-dynamodb": "^3.788.0",
     "@aws-sdk/client-rekognition": "^3.787.0",
+    "@aws-sdk/lib-dynamodb": "^3.789.0",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@inquirer/prompts": "^7.4.1",
     "@types/adm-zip": "^0.5.7",

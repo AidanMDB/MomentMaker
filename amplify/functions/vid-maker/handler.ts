@@ -7,6 +7,8 @@ import { promisify } from "util";
 import * as path from "path";
 import { randomUUID } from "crypto";
 import ffmpeg from "fluent-ffmpeg";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { GetCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 ffmpeg.setFfmpegPath("/opt/ffmpeglib/ffmpeg"); // For Lambda Layer or bundled binary
 
@@ -19,8 +21,10 @@ const OUTPUT_RESOLUTION = { width: 1280, height: 720 };
 
 const pipe = promisify(pipeline);
 const s3Client = new S3Client({ region: "us-east-1" });
-//const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fdhfxhm7qwnv";
-const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
+const dbclient = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(dbclient);
+const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fdhfxhm7qwnv";
+//const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     console.log("Handler invoked");
@@ -46,6 +50,12 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
     }
     console.log("UserID:", userID);
 
+    const faceID = event.queryStringParameters?.faceID;
+    if (!faceID) {
+        console.error("Missing faceID parameter");
+        return { statusCode: 400, body: JSON.stringify({ error: "Missing faceID parameter" }) };
+    }
+
     const timeLimit = event.queryStringParameters?.timeLimit;
     if (!timeLimit) {
         console.error("Missing timeLimit parameter");
@@ -65,6 +75,13 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             return { statusCode: 404, body: JSON.stringify({ error: "No media files found" }) };
         }
         console.log("Downloaded files:", downloadedFiles);
+
+        console.log("Getting files from DynamoDB for userID:", userID, "and faceID:", faceID);
+        const faceIDData = await getFilesfromFaceID(userID, faceID);
+        if (!faceIDData) {
+            console.warn("No faceID data found for userID:", userID, "and faceID:", faceID);
+            return { statusCode: 404, body: JSON.stringify({ error: "No faceID data found" }) };
+        }
 
         console.log("Processing downloaded files...");
         const processedFiles = await handleFiles(downloadedFiles);
@@ -300,3 +317,18 @@ export async function downloadAllMediaFromS3(userID: string, song?: string): Pro
 
     return downloadedFiles;
 }
+
+
+export async function getFilesfromFaceID(userID: string, faceID: string): Promise<any> {
+    const command = new GetCommand({
+        TableName: process.env.FACE_LOCATIONS_TABLE_NAME,
+        Key: {
+            userID,
+            faceID,
+        },
+    });
+
+    const result = await docClient.send(command);
+    console.log("DynamoDB result:", result.Item);
+    return result.Item || [];
+};

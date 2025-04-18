@@ -8,8 +8,8 @@ import "./CreateMoment.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 //change this to the actual lambda when merged
-//const LAMBDA_URL = 'https://oww7phtdo4nqxpfsftccvdj6rm0fnils.lambda-url.us-east-1.on.aws/'; //sandbox
-const LAMBDA_URL = 'https://stfvtflwooq5txkmuwjzhvc5wq0pkikm.lambda-url.us-east-1.on.aws/';
+const LAMBDA_URL = 'https://oww7phtdo4nqxpfsftccvdj6rm0fnils.lambda-url.us-east-1.on.aws/'; //sandbox
+//const LAMBDA_URL = 'https://stfvtflwooq5txkmuwjzhvc5wq0pkikm.lambda-url.us-east-1.on.aws/';
 
 export default function Library() {
     const [userID, setUserID] = useState<string | null>(null);
@@ -17,6 +17,7 @@ export default function Library() {
     const [songs, setSongs] = useState<string[]>([]);
     const [people, setPeople] = useState<URL[]>([]);
     const [selectedPersons, setSelectedPersons] = useState<string[]>([]);
+    const [selectedFace, setSelectedFace] = useState<string[]>([]);
     const [selectedSong, setSelectedSong] = useState<string | undefined>(undefined);
     const [selectedTime, setSelectedTime] = useState<number>(60);
     const [isLoading, setIsLoading] = useState(false);
@@ -89,7 +90,7 @@ export default function Library() {
         //API CALL
         try {
             // Send a GET request to the Lambda function URL with the query string
-            const response = await fetch(`${LAMBDA_URL}?userID=${userID}&timeLimit=${selectedTime}&song=${selectedSong}`);
+            const response = await fetch(`${LAMBDA_URL}?userID=${userID}&faceID=${selectedFace[0]}&timeLimit=${selectedTime}&song=${selectedSong}`);
             if (response.ok) {
                 const data = await response.json();
                 console.log('Lambda response:', data);
@@ -147,6 +148,15 @@ export default function Library() {
     }
 
     const handleSubmit = async () => {
+        const match = selectedPersons[0].match(/user-media[^?]*/);
+        const faceID = match ? match[1] : null;
+        if (faceID) {
+            setSelectedFace([faceID]);
+        } else {
+            console.error("No match found for face ID.");
+        }
+        alert("Selected Face ID: " + selectedFace[0]);
+        
         setIsLoading(true);
         try {
             await createVideo();
