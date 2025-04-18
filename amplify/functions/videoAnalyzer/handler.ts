@@ -297,6 +297,8 @@ export const handler: SNSHandler = async (event: SNSEvent) => {
             bucketName = videoResponse.Video?.S3Object?.Bucket;
         }
 
+        // get userID from the bucket name
+        // user-media/USER_ID/videos/VIDEO_NAME.mp4
         userID = bucketName.split('/')[1];
     }
 };
