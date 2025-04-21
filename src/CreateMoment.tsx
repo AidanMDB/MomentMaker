@@ -87,10 +87,19 @@ export default function Library() {
     };
 
     const createVideo = async () => {
+        let faceID = [""];
+        for (let i = 0; i < selectedPersons.length; i++) {
+            const match = selectedPersons[i].match(/user-media[^?]*/);
+            faceID[i] = match ? match[0] : "";
+        }
+
+        if (faceID[0] === '') {
+            console.log("no face selected")
+        }
         //API CALL
         try {
             // Send a GET request to the Lambda function URL with the query string
-            const response = await fetch(`${LAMBDA_URL}?userID=${userID}&faceID=${selectedFace[0]}&timeLimit=${selectedTime}&song=${selectedSong}`);
+            const response = await fetch(`${LAMBDA_URL}?userID=${userID}&faceID=${faceID[0]}&timeLimit=${selectedTime}&song=${selectedSong}`);
             if (response.ok) {
                 const data = await response.json();
                 console.log('Lambda response:', data);
@@ -147,16 +156,7 @@ export default function Library() {
         }
     }
 
-    const handleSubmit = async () => {
-        const match = selectedPersons[0].match(/user-media[^?]*/);
-        const faceID = match ? match[1] : null;
-        if (faceID) {
-            setSelectedFace([faceID]);
-        } else {
-            console.error("No match found for face ID.");
-        }
-        alert("Selected Face ID: " + selectedFace[0]);
-        
+    const handleSubmit = async () => {        
         setIsLoading(true);
         try {
             await createVideo();

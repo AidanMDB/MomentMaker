@@ -51,10 +51,6 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
     console.log("UserID:", userID);
 
     const faceID = event.queryStringParameters?.faceID;
-    if (!faceID) {
-        console.error("Missing faceID parameter");
-        return { statusCode: 400, body: JSON.stringify({ error: "Missing faceID parameter" }) };
-    }
 
     const timeLimit = event.queryStringParameters?.timeLimit;
     if (!timeLimit) {
@@ -76,15 +72,32 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         }
         console.log("Downloaded files:", downloadedFiles);
 
-        console.log("Getting files from DynamoDB for userID:", userID, "and faceID:", faceID);
-        const faceIDData = await getFilesfromFaceID(userID, faceID);
-        if (!faceIDData) {
-            console.warn("No faceID data found for userID:", userID, "and faceID:", faceID);
-            return { statusCode: 404, body: JSON.stringify({ error: "No faceID data found" }) };
+        let faceIDData = null;
+        let fileMatches = null;
+        if(!faceID || faceID === "undefined" || faceID === "") {
+            console.log("No faceID provided, skipping DynamoDB lookup.");
+        } else {
+            console.log("Getting files from DynamoDB for userID:", userID, "and faceID:", faceID);
+            faceIDData = await getFilesfromFaceID(userID, faceID);
+            if (!faceIDData) {
+                console.warn("No faceID data found for userID:", userID, "and faceID:", faceID);
+                return { statusCode: 404, body: JSON.stringify({ error: "No faceID data found" }) };
+            }
+            const fileNamesFromID = (faceIDData.imageLocations as string[]).map((loc: string) => loc.split("/").pop());
+            console.log("File names from faceID:", fileNamesFromID);
+
+            fileMatches = downloadedFiles.filter(item => fileNamesFromID.includes(item));
+        }
+
+        console.log("File matches:", fileMatches);
+        let filteredFiles = downloadedFiles;
+        if (fileMatches && fileMatches.length > 0) {
+            console.log("Filtering downloaded files based on faceID data.");
+            filteredFiles = fileMatches;
         }
 
         console.log("Processing downloaded files...");
-        const processedFiles = await handleFiles(downloadedFiles);
+        const processedFiles = await handleFiles(filteredFiles);
         console.log("Processed files:", processedFiles);
 
         console.log("Merging media files...");
