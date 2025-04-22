@@ -23,7 +23,7 @@ const pipe = promisify(pipeline);
 const s3Client = new S3Client({ region: "us-east-1" });
 const dbclient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dbclient);
-const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fdhfxhm7qwnv";
+const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-5ubyocljxkki";
 //const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
@@ -228,7 +228,7 @@ function shuffleArray(array: string[]): string[] {
             .input(tempListFile)
             .inputOptions(["-f", "concat", "-safe", "0"]);
 
-        if (songFile && songFile != "undefined" && songFile != ".mp3") {
+        if (songFile && songFile != "undefined.mp3" && songFile != ".mp3") {
             ffmpegCommand = ffmpegCommand
                 .input(path.join(TMP_DIR, songFile))
                 .audioCodec("aac")

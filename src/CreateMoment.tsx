@@ -8,7 +8,7 @@ import "./CreateMoment.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 //change this to the actual lambda when merged
-const LAMBDA_URL = 'https://oww7phtdo4nqxpfsftccvdj6rm0fnils.lambda-url.us-east-1.on.aws/'; //sandbox
+const LAMBDA_URL = 'https://lyuficiqhqbo7rmpdr2z24tbga0uldne.lambda-url.us-east-1.on.aws/'; //sandbox
 //const LAMBDA_URL = 'https://stfvtflwooq5txkmuwjzhvc5wq0pkikm.lambda-url.us-east-1.on.aws/';
 
 export default function Library() {
