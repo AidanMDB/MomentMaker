@@ -78,9 +78,9 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     height: auto;
-}
-
-.media_item {
+  }
+  
+  .media_item {
     width: 150px;
     height: 150px;
     border-radius: 10px;
@@ -128,6 +128,11 @@
     border-radius: 10px;
     object-fit: cover;
     display: block;
+}
+
+.song-item.selected {
+    outline: 2px solid var(--light-purple);
+    opacity: 0.8;
 }
 
 .song-item.selected {
