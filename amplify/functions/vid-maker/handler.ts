@@ -23,8 +23,8 @@ const pipe = promisify(pipeline);
 const s3Client = new S3Client({ region: "us-east-1" });
 const dbclient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dbclient);
-const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-5ubyocljxkki";
-//const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
+//const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-5ubyocljxkki";
+const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     console.log("Handler invoked");
