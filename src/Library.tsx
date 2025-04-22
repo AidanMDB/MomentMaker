@@ -111,7 +111,9 @@ export default function Library() {
                 const url = new URL(fileUrl.toString());
                 const keyMatch = url.pathname.match(/user-media\/.+/);
                 if (keyMatch) {
-                    await remove({ path: keyMatch[0] });
+                    const decodedKey = decodeURIComponent(keyMatch[0]);
+                    alert(decodedKey)
+                    await remove({ path: decodedKey });
                 }
             }
     
