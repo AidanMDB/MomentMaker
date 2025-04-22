@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import icon from "./assets/MomentMakerIcon.ico"
-import { useNavigate, useLocation } from "react-router-dom"
-import { signOut } from 'aws-amplify/auth';
+import { useNavigate } from "react-router-dom"
+import { signOut, getCurrentUser, fetchUserAttributes  } from 'aws-amplify/auth';
 import "./AllStyles.css"
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 import Library from "./Library"
 import CreateAMoment from "./CreateMoment"
@@ -11,15 +12,30 @@ export default function AllStyles() {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState("library");
+    const [user, setUser] = useState<{ email: string; id: string } | undefined>(undefined);
+    const [showProfile, setShowProfile] = useState(false);
     
-    const location = useLocation();
-
     useEffect(() => {
-        const activeTab = location.state?.activeTab;
-        if (activeTab !== undefined) {
-            setActiveTab(activeTab);
+        const init = async () => {
+            await fetchUser();
+        };
+    
+        init();
+    }, []);
+
+    const fetchUser = async () => {
+        try {
+            const user = await getCurrentUser();
+            const attributes = await fetchUserAttributes();
+
+            setUser({
+                email: attributes.email ?? '',
+                id: user.userId ?? '',
+            });
+        } catch (error) {
+            console.error("Error fetching user:", error);
         }
-    }, [location.state]);
+    };
 
     const handleLogout = async () => {
         try {
@@ -28,6 +44,10 @@ export default function AllStyles() {
         } catch (error) {
             console.error("Error signing out: ", error);
         }
+    };
+
+    const handleProfile = async () => {
+        setShowProfile((prev) => !prev);
     };
 
     return (
@@ -50,6 +70,17 @@ export default function AllStyles() {
                 <div className="container">
                     <div className="topbar">
                         <button className="logout" onClick={handleLogout}>Log Out</button>
+                        <div style={{ position: 'relative' }}>
+                            <button className="profile" onClick={handleProfile}>
+                                <i className="fas fa-user"></i>
+                            </button>
+                            {showProfile && (
+                                <div className="profile_popup">
+                                    <p><strong>Email:</strong> {user?.email}</p>
+                                    <p><strong>User ID:</strong> {user?.id}</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="media_block">
                         {activeTab === "library" && <Library />}
