@@ -94,7 +94,11 @@ async function cropFaces(detectedFaces: FaceDetail[]) {
             width: Math.round((boundingBox.Width || 0) * imageMetadata.width!),
             height: Math.round((boundingBox.Height || 0) * imageMetadata.height!),
         }
-        const croppedImage = await image.extract(cropParams).toBuffer();
+        console.log(`imageMetadata: \n${JSON.stringify(imageMetadata.height)}\n${JSON.stringify(imageMetadata.width)}`);
+        console.log(`Cropping face ${i} with params: ${JSON.stringify(cropParams)}`);
+
+
+        const croppedImage = await sharp(imageBody).extract(cropParams).toBuffer();
         faceBuffers.push(croppedImage);
     }
 
@@ -116,7 +120,10 @@ async function getUserFaces() {
     }
     const command = new GetItemCommand(input);
     const response = await dbClient.send(command);
-    return response.Item && response.Item.faces ? response.Item.faces : [];
+    console.log(`Response ${JSON.stringify(response.Item, null, 2)}`);
+    const userFacesAttr = response.Item?.faces;
+    const userFaces = userFacesAttr?.L?.map((face) => face.S) ?? [];
+    return userFaces;
 }
 
 
@@ -126,8 +133,9 @@ async function getUserFaces() {
  * @param targetKey - The S3 key of the target image to compare against.
  * @returns - Array of face matches found in the target image.
  */
-async function compareFaces(sourceBuffer: Buffer, targetKey: string) {
+async function compareFaces(sourceBuffer: Buffer, targetKey: string | undefined) {
     console.log(`Comparing faces`);
+    console.log(`Target Key: ${targetKey}`);
     const params = {
         SimilarityThreshold: 90,
         SourceImage: { Bytes: sourceBuffer },
@@ -201,7 +209,7 @@ async function uploadFaceToS3(buffer: Buffer) {
  * If the face ID does not exist, it creates a new entry in the table.
  * @param faceID - The ID of the face to which the image location will be added.
  */
-async function addImageToFaceLocations(faceID: string) {
+async function addImageToFaceLocations(faceID: string | undefined) {
     console.log(`Adding image location to FaceLocations`);
     const updateParams = {
         ExpressionAttributeNames: {
@@ -259,7 +267,7 @@ async function analyzeImage() {
     for (const faceBuffer of faceBuffers) {
         let isUnique = true;
         //let storedFace;
-        for (const storedFace in storedFaces) {
+        for (const storedFace of storedFaces) {
             const match = await compareFaces(faceBuffer, storedFace);
             if (match.length) {
                 console.log("Face already exists in the database");
