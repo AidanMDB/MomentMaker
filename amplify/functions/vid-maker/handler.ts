@@ -83,7 +83,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
                 console.warn("No faceID data found for userID:", userID, "and faceID:", faceID);
                 return { statusCode: 404, body: JSON.stringify({ error: "No faceID data found" }) };
             }
-            const fileNamesFromID = (faceIDData.imageLocations as string[]).map((loc: string) => loc.split("/").pop());
+            const fileNamesFromID = faceIDData.map((loc: string) => loc.split("/").pop());
             console.log("File names from faceID:", fileNamesFromID);
 
             fileMatches = downloadedFiles.filter(item => fileNamesFromID.includes(item));
@@ -332,7 +332,7 @@ export async function downloadAllMediaFromS3(userID: string, song?: string): Pro
 }
 
 
-export async function getFilesfromFaceID(userID: string, faceID: string): Promise<any> {
+export async function getFilesfromFaceID(userID: string, faceID: string): Promise<string[]> {
     const command = new GetCommand({
         TableName: process.env.FACE_LOCATIONS_TABLE_NAME,
         Key: {
@@ -343,5 +343,9 @@ export async function getFilesfromFaceID(userID: string, faceID: string): Promis
 
     const result = await docClient.send(command);
     console.log("DynamoDB result:", result.Item);
-    return result.Item || [];
-};
+    if (!result.Item) {
+        console.error("No data found for userID:", userID, "and faceID:", faceID);
+        return [];
+    }
+    return result.Item.imageLocations as string[];
+}

@@ -86,7 +86,7 @@ export default function Library() {
     };
 
     const createVideo = async () => {
-        let faceID = [""];
+        const faceID = [""];
         for (let i = 0; i < selectedPersons.length; i++) {
             const match = selectedPersons[i].match(/user-media[^?]*/);
             faceID[i] = match ? match[0] : "";
