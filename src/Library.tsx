@@ -29,6 +29,7 @@ export default function Library() {
             const { items: videoResults } = await list({ path: `user-media/${userID}/video/` });
             const { items: songResults } = await list({ path: `user-media/${userID}/audio/` });
             const { items: momentResults } = await list({ path: `user-media/${userID}/moments/` });
+    
             const photoUrls = await Promise.all(
                 photoResults.map(async (file) => {
                     const urlOutput = await getUrl({ path: file.path });

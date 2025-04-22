@@ -134,3 +134,8 @@
     outline: 2px solid var(--light-purple);
     opacity: 0.8;
 }
+
+.song-item.selected {
+    outline: 2px solid var(--light-purple);
+    opacity: 0.8;
+}
