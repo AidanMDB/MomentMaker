@@ -112,7 +112,6 @@ export default function Library() {
                 const keyMatch = url.pathname.match(/user-media\/.+/);
                 if (keyMatch) {
                     const decodedKey = decodeURIComponent(keyMatch[0]);
-                    alert(decodedKey)
                     await remove({ path: decodedKey });
                 }
             }
@@ -261,11 +260,9 @@ export default function Library() {
                 )}
                 {activeTab === "Moments" && (
                     moments.map((src, index) => (
-                        <video
-                            key={index}
+                        <video key={index} 
                             className={`media_item ${selectedDeletion.includes(src) ? 'selected' : ''}`}
-                            onClick={() => toggleDeleteSelection(src)}
-                        >
+                            onClick={() => toggleDeleteSelection(src)} controls>
                             <source src={src.toString()} type="video/mp4" />
                         </video>
                     ))
