@@ -39,6 +39,7 @@
   "devDependencies": {
     "@aws-amplify/backend": "^1.15.0",
     "@aws-amplify/backend-cli": "^1.2.9",
+    "@cyclonedx/cyclonedx-npm": "^2.1.0",
     "@types/fluent-ffmpeg": "^2.1.27",
     "@types/jest": "^29.5.14",
     "@types/react": "^18.2.66",
