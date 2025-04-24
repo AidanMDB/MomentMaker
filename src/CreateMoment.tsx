@@ -8,7 +8,7 @@ import "./CreateMoment.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 //change this to the actual lambda when merged
-//const LAMBDA_URL = 'https://oww7phtdo4nqxpfsftccvdj6rm0fnils.lambda-url.us-east-1.on.aws/'; //sandbox
+//const LAMBDA_URL = 'https://lyuficiqhqbo7rmpdr2z24tbga0uldne.lambda-url.us-east-1.on.aws/'; //sandbox
 const LAMBDA_URL = 'https://stfvtflwooq5txkmuwjzhvc5wq0pkikm.lambda-url.us-east-1.on.aws/';
 
 export default function Library() {
@@ -86,10 +86,19 @@ export default function Library() {
     };
 
     const createVideo = async () => {
+        const faceID = [""];
+        for (let i = 0; i < selectedPersons.length; i++) {
+            const match = selectedPersons[i].match(/user-media[^?]*/);
+            faceID[i] = match ? match[0] : "";
+        }
+
+        if (faceID[0] === '') {
+            console.log("no face selected")
+        }
         //API CALL
         try {
             // Send a GET request to the Lambda function URL with the query string
-            const response = await fetch(`${LAMBDA_URL}?userID=${userID}&timeLimit=${selectedTime}&song=${selectedSong}`);
+            const response = await fetch(`${LAMBDA_URL}?userID=${userID}&faceID=${faceID[0]}&timeLimit=${selectedTime}&song=${selectedSong}`);
             if (response.ok) {
                 const data = await response.json();
                 console.log('Lambda response:', data);
@@ -146,7 +155,7 @@ export default function Library() {
         }
     }
 
-    const handleSubmit = async () => {
+    const handleSubmit = async () => {        
         setIsLoading(true);
         try {
             await createVideo();

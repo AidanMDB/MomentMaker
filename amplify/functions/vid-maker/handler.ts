@@ -7,6 +7,8 @@ import { promisify } from "util";
 import * as path from "path";
 import { randomUUID } from "crypto";
 import ffmpeg from "fluent-ffmpeg";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { GetCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 ffmpeg.setFfmpegPath("/opt/ffmpeglib/ffmpeg"); // For Lambda Layer or bundled binary
 
@@ -19,7 +21,9 @@ const OUTPUT_RESOLUTION = { width: 1280, height: 720 };
 
 const pipe = promisify(pipeline);
 const s3Client = new S3Client({ region: "us-east-1" });
-//const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fdhfxhm7qwnv";
+const dbclient = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(dbclient);
+//const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-5ubyocljxkki";
 const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
@@ -46,6 +50,8 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
     }
     console.log("UserID:", userID);
 
+    const faceID = event.queryStringParameters?.faceID;
+
     const timeLimit = event.queryStringParameters?.timeLimit;
     if (!timeLimit) {
         console.error("Missing timeLimit parameter");
@@ -66,8 +72,32 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         }
         console.log("Downloaded files:", downloadedFiles);
 
+        let faceIDData = null;
+        let fileMatches = null;
+        if(!faceID || faceID === "undefined" || faceID === "") {
+            console.log("No faceID provided, skipping DynamoDB lookup.");
+        } else {
+            console.log("Getting files from DynamoDB for userID:", userID, "and faceID:", faceID);
+            faceIDData = await getFilesfromFaceID(userID, faceID);
+            if (!faceIDData) {
+                console.warn("No faceID data found for userID:", userID, "and faceID:", faceID);
+                return { statusCode: 404, body: JSON.stringify({ error: "No faceID data found" }) };
+            }
+            const fileNamesFromID = faceIDData.map((loc: string) => loc.split("/").pop());
+            console.log("File names from faceID:", fileNamesFromID);
+
+            fileMatches = downloadedFiles.filter(item => fileNamesFromID.includes(item));
+        }
+
+        console.log("File matches:", fileMatches);
+        let filteredFiles = downloadedFiles;
+        if (fileMatches && fileMatches.length > 0) {
+            console.log("Filtering downloaded files based on faceID data.");
+            filteredFiles = fileMatches;
+        }
+
         console.log("Processing downloaded files...");
-        const processedFiles = await handleFiles(downloadedFiles);
+        const processedFiles = await handleFiles(filteredFiles);
         console.log("Processed files:", processedFiles);
 
         console.log("Merging media files...");
@@ -198,7 +228,7 @@ function shuffleArray(array: string[]): string[] {
             .input(tempListFile)
             .inputOptions(["-f", "concat", "-safe", "0"]);
 
-        if (songFile && songFile != "undefined" && songFile != ".mp3") {
+        if (songFile && songFile != "undefined.mp3" && songFile != ".mp3") {
             ffmpegCommand = ffmpegCommand
                 .input(path.join(TMP_DIR, songFile))
                 .audioCodec("aac")
@@ -302,5 +332,20 @@ export async function downloadAllMediaFromS3(userID: string, song?: string): Pro
 }
 
 
+export async function getFilesfromFaceID(userID: string, faceID: string): Promise<string[]> {
+    const command = new GetCommand({
+        TableName: process.env.FACE_LOCATIONS_TABLE_NAME,
+        Key: {
+            userID,
+            faceID,
+        },
+    });
 
-
+    const result = await docClient.send(command);
+    console.log("DynamoDB result:", result.Item);
+    if (!result.Item) {
+        console.error("No data found for userID:", userID, "and faceID:", faceID);
+        return [];
+    }
+    return result.Item.imageLocations as string[];
+}

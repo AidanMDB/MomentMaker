@@ -73,6 +73,7 @@ backend.videoAnalyzer.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsD
 backend.imageAnalyzer.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);
 backend.imageAnalyzer.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsDatabase.tableName);
 
+backend.myVidMakerFunction.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsDatabase.tableName);  
 
 // add the SNS topic ARN as an environment variable to the videoAnalyzer function
 backend.videoStarter.addEnvironment('SNS_TOPIC_ARN', videoSNS.topicArn);
