@@ -3,7 +3,7 @@ import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand } fro
 import { S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { SNSHandler, SNSEvent } from 'aws-lambda';
 import { v4 as uuidv4 } from "uuid";
-import Ffmpeg from 'fluent-ffmpeg';
+import ffmpeg from 'fluent-ffmpeg';
 import sharp from "sharp";
 import { Readable } from 'stream';
 
@@ -44,7 +44,7 @@ async function extractFrameFromVideo(videoBody: Readable, timestamp: number | un
     return new Promise<Buffer>((resolve, reject) => {
         const buffers: Buffer[] = [];
 
-        const ffmpegStream = Ffmpeg(videoBody)
+        const ffmpegStream = ffmpeg(videoBody)
             .inputOptions([`-ss ${timestampSeconds}`])
             .outputOptions([`-vframes 1`, `-f image2pipe`, `-vcodec png`])
             .on('error', (err) => {
@@ -301,13 +301,13 @@ export const handler: SNSHandler = async (event: SNSEvent) => {
     // loop throught all SNS events
     for (const record of event.Records) {
         const message = JSON.parse(record.Sns.Message);
-        console.log(`Received message: ${message}`);
+        console.log(`Received message: ${JSON.stringify(message)}`);
 
         // Check if the message is a successful video analysis result
-        if (message.status === 'SUCCEEDED') {
+        if (message.Status === 'SUCCEEDED') {
             bucketName = message.Video.S3Bucket;
             objectKey = message.Video.S3ObjectName;
-            jobID = message.jobID;
+            jobID = message.JobId;
             console.log(`Video analysis succeeded for video ID: ${jobID}\n in bucket: ${bucketName}\n object key: ${objectKey}`);
             const videoFaceList = await getFacesFromVideo();
             if (!videoFaceList?.length) {
