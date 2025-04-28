@@ -11,6 +11,7 @@ const rekogClient = new RekognitionClient({region: 'us-east-1'});
 const s3Client = new S3Client({region: 'us-east-1'});
 const dbClient = new DynamoDBClient({region: 'us-east-1'});
 
+ffmpeg.setFfmpegPath("/opt/ffmpeglib/ffmpeg"); // For Lambda Layer or bundled binary
 
 let jobID: string | undefined;
 let objectKey: string | undefined;
@@ -272,6 +273,7 @@ async function analyzeFacesInVideo(faceList: FaceDetection[]) {
             if (match.length > 0) {
                 console.log("Faces already exists in the database");
                 await addImageToFaceLocations(uniqueFace);
+                await findFaceTimestampsInVideo(uniqueFace);
                 isUnique = false;
                 break;
             }
@@ -280,6 +282,7 @@ async function analyzeFacesInVideo(faceList: FaceDetection[]) {
         if (isUnique) {
             const locKey = await uploadFaceToS3(croppedFaceBuffer);
             await addImageToFaceLocations(locKey);
+            await findFaceTimestampsInVideo(locKey);
         }
     }
 }
@@ -295,6 +298,57 @@ async function getFacesFromVideo() {
     return response.Faces
 }
 
+async function findFaceTimestampsInVideo(faceKey: string | undefined) {
+    console.log(`Finding timestamps for face: ${faceKey}`);
+
+    const videoFaces = await getFacesFromVideo();
+    if (!videoFaces?.length) {
+        console.log("No faces detected in the video");
+        return;
+    }
+
+    const videoBody = await getS3Video();
+    if (!(videoBody instanceof Readable)) {
+        console.log("No video found in S3");
+        return;
+    }
+
+    const matchingTimestamps: number[] = [];
+
+    for (const face of videoFaces) {
+        if (!face.Face || face.Timestamp === undefined) {
+            continue;
+        }
+
+        const frameBuffer = await extractFrameFromVideo(videoBody, face.Timestamp);
+        const croppedFaceBuffer = await cropFace(face.Face, frameBuffer);
+
+        const matches = await compareFaces(croppedFaceBuffer, faceKey);
+        if (matches.length > 0) {
+            console.log(`Match found at timestamp: ${face.Timestamp}`);
+            matchingTimestamps.push(face.Timestamp);
+        }
+    }
+
+    if (matchingTimestamps.length > 0) {
+        const updateParams = {
+            TableName: process.env.FACE_TIMESTAMPS_TABLE_NAME,
+            Key: {
+                userID: { S: `${userID}` },
+                faceID: { S: `${faceKey}` },
+                videoID: { S: `${objectKey}` }
+            },
+            UpdateExpression: "SET timestamps = :timestamps",
+            ExpressionAttributeValues: {
+                ":timestamps": { L: matchingTimestamps.map(ts => ({ N: ts.toString() })) }
+            }
+        };
+        await dbClient.send(new UpdateItemCommand(updateParams));
+        console.log(`Saved timestamps for face ${faceKey} in DynamoDB`);
+    } else {
+        console.log(`No matches found for face ${faceKey}`);
+    }
+}
 
 
 export const handler: SNSHandler = async (event: SNSEvent) => {

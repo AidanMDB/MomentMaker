@@ -35,6 +35,7 @@ const videoStarterFunction = backend.videoStarter.resources.lambda;
 const zipFileExtractorFunction = backend.zipFileExtractor.resources.lambda;
 const userFacesDatabase = backend.data.resources.tables.UserFaces;
 const faceLocationsDatabase = backend.data.resources.tables.FaceLocations;
+const faceTimestampsDatabase = backend.data.resources.tables.FaceTimestamps;
 const videoAnalyzerFunction = backend.videoAnalyzer.resources.lambda;
 const storageS3 = backend.storage.resources.bucket;
 
@@ -69,6 +70,7 @@ videoSNS.addToResourcePolicy(
 //backend.videoAnalyzer.addEnvironment('S3_BUCKET_NAME', storageS3.bucketName);
 backend.videoAnalyzer.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);
 backend.videoAnalyzer.addEnvironment('FACE_LOCATIONS_TABLE_NAME', faceLocationsDatabase.tableName);
+backend.videoAnalyzer.addEnvironment('FACE_TIMESTAMPS_TABLE_NAME', faceTimestampsDatabase.tableName);
 
 // Add the table names as enviroment variables to the imageAnalyzer function
 backend.imageAnalyzer.addEnvironment('USER_FACES_TABLE_NAME', userFacesDatabase.tableName);

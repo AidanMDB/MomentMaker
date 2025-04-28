@@ -1,4 +1,5 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
+import { FaceAttributes } from "@aws-sdk/client-rekognition";
 /*== STEP 1 ===============================================================
 The section below creates a Todo database table with a "content" field. Try
 adding a new "isDone" field as a boolean. The authorization rule below
@@ -19,7 +20,17 @@ const schema = a.schema({
     imageLocations: a.string().array()
   })
   .identifier(["userID", "faceID"])
-  .authorization((allow) => [allow.publicApiKey()])
+  .authorization((allow) => [allow.publicApiKey()]),
+
+  FaceTimestamps: a.model({
+    userID: a.id().required(),
+    faceID: a.string().required(),
+    videoID: a.string().required(),
+    timestamps: a.string().array()
+  })
+  .identifier(["userID", "faceID", "videoID"])
+  .authorization((allow) => [allow.publicApiKey()]),
+
 }       );
 //.authorization((allow) => [allow.publicApiKey(), allow.resource(myUploadFunction), allow.resource(imageAnalyzer), allow.resource(videoAnalyzer), allow.resource(zipFileExtractor)]
 //);
