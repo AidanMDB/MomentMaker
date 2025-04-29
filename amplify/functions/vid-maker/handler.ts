@@ -23,7 +23,7 @@ const pipe = promisify(pipeline);
 const s3Client = new S3Client({ region: "us-east-1" });
 const dbclient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dbclient);
-//const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-5ubyocljxkki";
+//const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fcbuq5j5ksnw";
 const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
@@ -74,6 +74,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         let faceIDData = null;
         let fileMatches = null;
+        let fileNamesFromID: { filename: string; timestamp?: number }[] = [];
         if(!faceID || faceID === "undefined" || faceID === "") {
             console.log("No faceID provided, skipping DynamoDB lookup.");
         } else {
@@ -83,10 +84,22 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
                 console.warn("No faceID data found for userID:", userID, "and faceID:", faceID);
                 return { statusCode: 404, body: JSON.stringify({ error: "No faceID data found" }) };
             }
-            const fileNamesFromID = faceIDData.map((loc: string) => loc.split("/").pop());
+            fileNamesFromID = faceIDData.map((loc: string | { videoKey: string, timestamp?: number }) => {
+                if (typeof loc === "string") {
+                    console.log("FaceID data is a string:", loc);
+                    return { filename: loc.split("/").pop()! };
+                } else {
+                    console.log("FaceID data is an object:", loc);
+                    return {
+                        filename: loc.videoKey.split("/").pop()!,
+                        timestamp: loc.timestamp
+                    };
+                }
+            });
+            
             console.log("File names from faceID:", fileNamesFromID);
 
-            fileMatches = downloadedFiles.filter(item => fileNamesFromID.includes(item));
+            fileMatches = downloadedFiles.filter(item => fileNamesFromID.map(file => file.filename).includes(item));
         }
 
         console.log("File matches:", fileMatches);
@@ -97,7 +110,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         }
 
         console.log("Processing downloaded files...");
-        const processedFiles = await handleFiles(filteredFiles);
+        const processedFiles = await handleFiles(filteredFiles, fileNamesFromID);
         console.log("Processed files:", processedFiles);
 
         console.log("Merging media files...");
@@ -185,7 +198,7 @@ function convertImageToVideo(imagePath: string, outputPath: string, duration = I
     });
 }
 
-async function handleFiles(fileList: string[]): Promise<string[]> {
+async function handleFiles(fileList: string[], fileInfo: { filename: string; timestamp?: number }[]): Promise<string[]> {
     console.log("Handling files:", fileList);
     const processedFiles: string[] = [];
 
@@ -193,10 +206,43 @@ async function handleFiles(fileList: string[]): Promise<string[]> {
         if (isVideo(file)) {
             const trimmedName = `trimmed_${file}`;
             console.log(`Trimming video: ${file}`);
-            await parseVideo(file, trimmedName, 10, 30);
-            processedFiles.push(trimmedName);
+            if (fileInfo.length === 0) {
+                processedFiles.push(file);
+                console.log(`No timestamps found for video, using full video: ${file}`);
+                continue;
+            } else {
+                const timestamps = fileInfo
+                    .filter(info => info.filename === file)
+                    .map(info => info.timestamp)
+                    .filter((timestamp): timestamp is number => timestamp !== undefined);
+                console.log("Timestamps for video:", timestamps);
+                if (timestamps.length === 0) {
+                    console.log("No timestamps found for video, not using it");
+                } else {
+                    const CLUSTER_THRESHOLD = 5000; // 5 seconds in ms
+                    const BUFFER = 2000; // optional extra time in ms after the last timestamp
+                    const sortedTimestamps = [...timestamps].sort((a, b) => a - b);
+
+                    let clusterStart = sortedTimestamps[0] || 0;
+
+                    for (let i = 1; i <= sortedTimestamps.length; i++) {
+                        const current = sortedTimestamps[i];
+                        const previous = sortedTimestamps[i - 1];
+
+                        // If the next timestamp is too far or this is the last one, close the current cluster
+                        if (!current || current - previous > CLUSTER_THRESHOLD) {
+                            const clusterEnd = previous + BUFFER;
+                            console.log(`Trimming video from ${clusterStart} ms to ${clusterEnd} ms`);
+                            await parseVideo(file, `clip_${i}_${trimmedName}`, clusterStart / 1000, clusterEnd / 1000);
+                            processedFiles.push(`clip_${i}_${trimmedName}`);
+                            console.log(`Trimmed video saved as: clip_${i}-${trimmedName}`);
+                            clusterStart = current;
+                        }
+                    }
+                }
+            }
         } else if (isImage(file)) {
-            const imageVidName = `image_${randomUUID()}.mp4`;
+            const imageVidName = `vid_of_image_${file}.mp4`;
             console.log(`Converting image to video: ${file}`);
             await convertImageToVideo(file, imageVidName);
             processedFiles.push(imageVidName);
@@ -220,6 +266,17 @@ function shuffleArray(array: string[]): string[] {
 
   function mergeMedia(clips: string[], outputPath: string, songFile?: string): Promise<string> {
     console.log("Merging media clips:", clips);
+
+    const requiredFiles = clips.map(f => path.join(TMP_DIR, f));
+    fs.readdirSync(TMP_DIR).forEach(file => {
+        const fullPath = path.join(TMP_DIR, file);
+        if (!requiredFiles.includes(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      });
+    console.log("Temporary files cleaned up.");
+    console.log("Temporary files in TMP_DIR:", fs.readdirSync(TMP_DIR));
+
     return new Promise((resolve, reject) => {
         const tempListFile = path.join(TMP_DIR, "input.txt");
         fs.writeFileSync(tempListFile, clips.map(f => `file '${path.join(TMP_DIR, f)}'`).join("\n"));
