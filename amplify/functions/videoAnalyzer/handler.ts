@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from "uuid";
 import ffmpeg from 'fluent-ffmpeg';
 import sharp from "sharp";
 import { Readable } from 'stream';
+import fs from 'fs';
+import { randomUUID } from "crypto";
 
 const rekogClient = new RekognitionClient({region: 'us-east-1'});
 const s3Client = new S3Client({region: 'us-east-1'});
@@ -16,36 +18,64 @@ ffmpeg.setFfmpegPath("/opt/ffmpeglib/ffmpeg"); // For Lambda Layer or bundled bi
 let jobID: string | undefined;
 let objectKey: string | undefined;
 let bucketName: string | undefined;
-let userID: string | undefined;
+let userID: string | null;
 
-
-async function getS3Video() {
-    console.log(`Getting image from S3 ${objectKey} in ${bucketName}`);
+async function getUserIdMetadata(bucket: string, key: string) {
+    console.log(`Getting userID metadata for ${key} in ${bucket}`);
     const params = {
-        Bucket: `${bucketName}`,
-        Key: `${objectKey}`
-    }
-    const command = new GetObjectCommand(params);
+        Bucket: bucket,
+        Key: key,
+    };
+    const command = new HeadObjectCommand(params);
     const response = await s3Client.send(command);
-    return response.Body;
+    console.log(`Response ${response.Metadata}`);
+    console.log(`Response ${JSON.stringify(response, null, 2)}`);
+    return response.Metadata?.userid || null;
 }
 
 
+// async function getS3Video() {
+//     console.log(`Getting image from S3 ${objectKey} in ${bucketName}`);
+//     const params = {
+//         Bucket: `${bucketName}`,
+//         Key: `${objectKey}`
+//     }
+//     const command = new GetObjectCommand(params);
+//     const response = await s3Client.send(command);
+//     return response.Body;
+// }
+
+async function downloadVideoOnce(): Promise<string> {
+    const command = new GetObjectCommand({ Bucket: bucketName, Key: objectKey });
+    const response = await s3Client.send(command);
+
+    const videoPath = `/tmp/video-${randomUUID()}.mp4`;
+    const writable = fs.createWriteStream(videoPath);
+
+    await new Promise<void>((resolve, reject) => {
+        (response.Body as Readable)
+            .pipe(writable)
+            .on('finish', resolve)
+            .on('error', reject);
+    });
+
+    return videoPath;
+}
 
 /**
  * 
- * @param videoBody - The video body from S3.
+ * @param videoPath - The video body from S3.
  * @param timestamp - The timestamp to extract the frame from.
  * @returns - The extracted frame as a buffer.
  */
-async function extractFrameFromVideo(videoBody: Readable, timestamp: number | undefined) {
+async function extractFrameFromVideo(videoPath: string, timestamp: number | undefined) {
     console.log(`Extracting frame from video at timestamp ${timestamp}`);
     const timestampSeconds = timestamp! / 1000;
     
     return new Promise<Buffer>((resolve, reject) => {
         const buffers: Buffer[] = [];
 
-        const ffmpegStream = ffmpeg(videoBody)
+        const ffmpegStream = ffmpeg(videoPath)
             .inputOptions([`-ss ${timestampSeconds}`])
             .outputOptions([`-vframes 1`, `-f image2pipe`, `-vcodec png`])
             .on('error', (err) => {
@@ -137,9 +167,14 @@ async function compareFaces(sourceBuffer: Buffer, targetKey: string | undefined)
             S3Object: { Bucket: `${bucketName}`, Name: targetKey }
         }
     }
-    const command = new CompareFacesCommand(params);
-    const response = await rekogClient.send(command);
-    return response.FaceMatches || [];
+    try {
+        const command = new CompareFacesCommand(params);
+        const response = await rekogClient.send(command);
+        return response.FaceMatches || [];
+    } catch (error) {
+        console.error(`Error comparing faces: ${error}`);
+        throw error;
+    }
 }
 
 
@@ -149,7 +184,7 @@ async function compareFaces(sourceBuffer: Buffer, targetKey: string | undefined)
  * If the face ID does not exist, it creates a new entry in the table.
  * @param faceID - The ID of the face to which the image location will be added.
  */
-async function addImageToFaceLocations(faceID: string | undefined) {
+async function addImageToFaceLocations(faceID: string | undefined, timestamp: number | undefined) {
     console.log(`Adding image location to FaceLocations`);
     const updateParams = {
         ExpressionAttributeNames: {
@@ -157,13 +192,16 @@ async function addImageToFaceLocations(faceID: string | undefined) {
         },
         ExpressionAttributeValues: {
             ":empty_list": { L: [] },
-            ":newImage": {L: [{ S: `${objectKey}` }] }
+            ":newLocation": {L: [{ M: {
+                videoKey: { S: `${objectKey}` },
+                timestamp: { N: `${timestamp}` }
+            } }] }
         },
         Key: {
             userID: { S: `${userID}` },
             faceID: { S: `${faceID}` }
         },
-        UpdateExpression: "SET #imageLocations = list_append(if_not_exists(#imageLocations, :empty_list), :newImage)",
+        UpdateExpression: "SET #imageLocations = list_append(if_not_exists(#imageLocations, :empty_list), :newLocation)",
         TableName: process.env.FACE_LOCATIONS_TABLE_NAME,
     };
 
@@ -176,7 +214,10 @@ async function addImageToFaceLocations(faceID: string | undefined) {
                 Item: {
                     userID: { S: `${userID}` },
                     faceID: { S: `${faceID}` },
-                    imageLocations: { L: [{ S: `${objectKey}` }] }
+                    imageLocations: {L: [{ M: {
+                        videoKey: { S: `${objectKey}` },
+                        timestamp: { N: `${timestamp}` }
+                    } }] }
                 }
             };
             await dbClient.send(new PutItemCommand(putParams));
@@ -249,106 +290,109 @@ async function uploadFaceToS3(buffer: Buffer) {
 async function analyzeFacesInVideo(faceList: FaceDetection[]) {
     console.log(`Analyzing faces in video`);
 
-    const videoBody = await getS3Video();
-    if (!(videoBody instanceof Readable)) {
+    const videoPath = await downloadVideoOnce();
+    if (!videoPath) {
         console.log("No video found in S3");
         return;
     }
-
-    const storedUniqueFaces  = await getUserFaces();
 
     for (const face of faceList) {
         if (!face.Face) {
             console.log("No face found in video");
             continue;
         }
-        face.Timestamp
-        const imageBuffer = await extractFrameFromVideo(videoBody, face.Timestamp);
+        console.log(`Analyzing face at timestamp ${face.Timestamp}`);
+        const imageBuffer = await extractFrameFromVideo(videoPath, face.Timestamp);
         const croppedFaceBuffer = await cropFace(face.Face, imageBuffer);
 
         let isUnique = true;
+        const storedUniqueFaces  = await getUserFaces();
 
         for (const uniqueFace of storedUniqueFaces) {
             const match = await compareFaces(croppedFaceBuffer, uniqueFace);
             if (match.length > 0) {
                 console.log("Faces already exists in the database");
-                await addImageToFaceLocations(uniqueFace);
-                await findFaceTimestampsInVideo(uniqueFace);
+                await addImageToFaceLocations(uniqueFace, face.Timestamp);
                 isUnique = false;
                 break;
             }
         }
 
         if (isUnique) {
+            console.log("Unique face found, uploading to S3 and updating DynamoDB");
             const locKey = await uploadFaceToS3(croppedFaceBuffer);
-            await addImageToFaceLocations(locKey);
-            await findFaceTimestampsInVideo(locKey);
+            await addImageToFaceLocations(locKey, face.Timestamp);
         }
     }
 }
 
 
 async function getFacesFromVideo() {
-    const params = {
-        JobId: jobID
-    }
+    const params = { JobId: jobID };
     const command = new GetFaceDetectionCommand(params);
     const response = await rekogClient.send(command);
-    console.log(`Get Detected Faces: ${JSON.stringify(response)}`);
-    return response.Faces
+    console.log(`Raw GetFaceDetection response: ${JSON.stringify(response)}`);
+
+    const faces = response.Faces || [];
+
+    const goodFaces = faces.filter(faceData => {
+        const face = faceData.Face;
+        const quality = face?.Quality;
+        if (!quality || !quality.Brightness || !quality.Sharpness) {
+            return false;
+        }
+        return quality && quality.Brightness > 40 && quality.Sharpness > 30;
+    });
+
+    console.log(`Filtered ${goodFaces.length} good faces out of ${faces.length} total faces`);
+    return goodFaces;
 }
 
-async function findFaceTimestampsInVideo(faceKey: string | undefined) {
-    console.log(`Finding timestamps for face: ${faceKey}`);
+// async function findFaceTimestampsInVideo(videoPath: string, faceKey: string | undefined) {
+//     console.log(`Finding timestamps for face: ${faceKey}`);
 
-    const videoFaces = await getFacesFromVideo();
-    if (!videoFaces?.length) {
-        console.log("No faces detected in the video");
-        return;
-    }
+//     const videoFaces = await getFacesFromVideo();
+//     if (!videoFaces?.length) {
+//         console.log("No faces detected in the video");
+//         return;
+//     }
 
-    const videoBody = await getS3Video();
-    if (!(videoBody instanceof Readable)) {
-        console.log("No video found in S3");
-        return;
-    }
+//     const matchingTimestamps: number[] = [];
 
-    const matchingTimestamps: number[] = [];
+//     for (const face of videoFaces) {
+//         if (!face.Face || face.Timestamp === undefined) {
+//             continue;
+//         }
 
-    for (const face of videoFaces) {
-        if (!face.Face || face.Timestamp === undefined) {
-            continue;
-        }
+//         const frameBuffer = await extractFrameFromVideo(videoPath, face.Timestamp);
+//         const croppedFaceBuffer = await cropFace(face.Face, frameBuffer);
 
-        const frameBuffer = await extractFrameFromVideo(videoBody, face.Timestamp);
-        const croppedFaceBuffer = await cropFace(face.Face, frameBuffer);
+//         const matches = await compareFaces(croppedFaceBuffer, faceKey);
+//         if (matches.length > 0) {
+//             console.log(`Match found at timestamp: ${face.Timestamp}`);
+//             matchingTimestamps.push(face.Timestamp);
+//         }
+//     }
 
-        const matches = await compareFaces(croppedFaceBuffer, faceKey);
-        if (matches.length > 0) {
-            console.log(`Match found at timestamp: ${face.Timestamp}`);
-            matchingTimestamps.push(face.Timestamp);
-        }
-    }
-
-    if (matchingTimestamps.length > 0) {
-        const updateParams = {
-            TableName: process.env.FACE_TIMESTAMPS_TABLE_NAME,
-            Key: {
-                userID: { S: `${userID}` },
-                faceID: { S: `${faceKey}` },
-                videoID: { S: `${objectKey}` }
-            },
-            UpdateExpression: "SET timestamps = :timestamps",
-            ExpressionAttributeValues: {
-                ":timestamps": { L: matchingTimestamps.map(ts => ({ N: ts.toString() })) }
-            }
-        };
-        await dbClient.send(new UpdateItemCommand(updateParams));
-        console.log(`Saved timestamps for face ${faceKey} in DynamoDB`);
-    } else {
-        console.log(`No matches found for face ${faceKey}`);
-    }
-}
+//     if (matchingTimestamps.length > 0) {
+//         const updateParams = {
+//             TableName: process.env.FACE_TIMESTAMPS_TABLE_NAME,
+//             Key: {
+//                 userID: { S: `${userID}` },
+//                 faceID: { S: `${faceKey}` },
+//                 videoID: { S: `${objectKey}` }
+//             },
+//             UpdateExpression: "SET timestamps = :timestamps",
+//             ExpressionAttributeValues: {
+//                 ":timestamps": { L: matchingTimestamps.map(ts => ({ N: ts.toString() })) }
+//             }
+//         };
+//         await dbClient.send(new UpdateItemCommand(updateParams));
+//         console.log(`Saved timestamps for face ${faceKey} in DynamoDB`);
+//     } else {
+//         console.log(`No matches found for face ${faceKey}`);
+//     }
+// }
 
 
 export const handler: SNSHandler = async (event: SNSEvent) => {
@@ -361,6 +405,11 @@ export const handler: SNSHandler = async (event: SNSEvent) => {
         if (message.Status === 'SUCCEEDED') {
             bucketName = message.Video.S3Bucket;
             objectKey = message.Video.S3ObjectName;
+            if (!bucketName || !objectKey) {
+                console.log("No bucket name or object key found in the message");
+                return;
+            }
+            userID = await getUserIdMetadata(bucketName, objectKey);
             jobID = message.JobId;
             console.log(`Video analysis succeeded for video ID: ${jobID}\n in bucket: ${bucketName}\n object key: ${objectKey}`);
             const videoFaceList = await getFacesFromVideo();
