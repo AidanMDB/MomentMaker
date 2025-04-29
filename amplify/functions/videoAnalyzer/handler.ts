@@ -108,7 +108,6 @@ async function cropFace(detectedFace: FaceDetail, frameImageBuffer: Buffer) {
     console.log(`Cropping faces `);
     const image = sharp(frameImageBuffer);
     const imageMetadata = await image.metadata();
-    let faceBuffer: Buffer;
     const boundingBox = detectedFace.BoundingBox;
 
     const cropParams = {
@@ -120,11 +119,8 @@ async function cropFace(detectedFace: FaceDetail, frameImageBuffer: Buffer) {
     console.log(`imageMetadata: \n${JSON.stringify(imageMetadata.height)}\n${JSON.stringify(imageMetadata.width)}`);
     console.log(`Cropping face with params: ${JSON.stringify(cropParams)}`);
 
-
     const croppedImage = await sharp(frameImageBuffer).extract(cropParams).toBuffer();
-    faceBuffer = croppedImage;
-
-    return faceBuffer;
+    return croppedImage;
 }
 
 
