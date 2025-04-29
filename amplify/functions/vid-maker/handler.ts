@@ -264,42 +264,47 @@ function shuffleArray(array: string[]): string[] {
     return arr;
   }  
 
-  function mergeMedia(clips: string[], outputPath: string, songFile?: string): Promise<string> {
+function mergeMedia(clips: string[], outputPath: string, songFile?: string): Promise<string> {
     console.log("Merging media clips:", clips);
 
     const requiredFiles = clips.map(f => path.join(TMP_DIR, f));
     fs.readdirSync(TMP_DIR).forEach(file => {
         const fullPath = path.join(TMP_DIR, file);
-        if (!requiredFiles.includes(fullPath)) {
-          fs.unlinkSync(fullPath);
+        if (!requiredFiles.includes(fullPath) && !fullPath.endsWith(".mp3")) {
+            fs.unlinkSync(fullPath);
         }
-      });
+    });
     console.log("Temporary files cleaned up.");
     console.log("Temporary files in TMP_DIR:", fs.readdirSync(TMP_DIR));
 
     return new Promise((resolve, reject) => {
         const tempListFile = path.join(TMP_DIR, "input.txt");
-        fs.writeFileSync(tempListFile, clips.map(f => `file '${path.join(TMP_DIR, f)}'`).join("\n"));
+        fs.writeFileSync(
+            tempListFile,
+            clips.map(f => `file '${path.join(TMP_DIR, f)}'`).join("\n")
+        );
 
         let ffmpegCommand = ffmpeg()
             .input(tempListFile)
             .inputOptions(["-f", "concat", "-safe", "0"]);
 
-        if (songFile && songFile != "undefined.mp3" && songFile != ".mp3") {
+        if (songFile && songFile !== "undefined.mp3" && songFile !== ".mp3") {
+            const songPath = path.join(TMP_DIR, songFile);
             ffmpegCommand = ffmpegCommand
-                .input(path.join(TMP_DIR, songFile))
+                .input(songPath)
+                .inputOptions("-stream_loop", "-1") // loop song infinitely
                 .audioCodec("aac")
                 .outputOptions([
-                    '-preset', 'ultrafast',
-                    '-t', `${TOTAL_VIDEO_DURATION}`,
-                    '-shortest', // ensure the output duration matches the shortest stream
-                    '-map', '0:v:0', // video from first input
-                    '-map', '1:a:0', // audio from second input (song)
+                    "-preset", "ultrafast",
+                    "-t", `${TOTAL_VIDEO_DURATION}`, // total video duration
+                    "-shortest",                      // clip song to match video
+                    "-map", "0:v:0",
+                    "-map", "1:a:0"
                 ]);
         } else {
             ffmpegCommand = ffmpegCommand.outputOptions([
-                '-preset', 'ultrafast',
-                '-t', `${TOTAL_VIDEO_DURATION}`,
+                "-preset", "ultrafast",
+                "-t", `${TOTAL_VIDEO_DURATION}`
             ]);
         }
 

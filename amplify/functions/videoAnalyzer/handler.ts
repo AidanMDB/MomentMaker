@@ -341,59 +341,12 @@ async function getFacesFromVideo() {
         if (!quality || !quality.Brightness || !quality.Sharpness) {
             return false;
         }
-        return quality && quality.Brightness > 40 && quality.Sharpness > 30;
+        return quality && quality.Brightness > 30 && quality.Sharpness > 30;
     });
 
     console.log(`Filtered ${goodFaces.length} good faces out of ${faces.length} total faces`);
     return goodFaces;
 }
-
-// async function findFaceTimestampsInVideo(videoPath: string, faceKey: string | undefined) {
-//     console.log(`Finding timestamps for face: ${faceKey}`);
-
-//     const videoFaces = await getFacesFromVideo();
-//     if (!videoFaces?.length) {
-//         console.log("No faces detected in the video");
-//         return;
-//     }
-
-//     const matchingTimestamps: number[] = [];
-
-//     for (const face of videoFaces) {
-//         if (!face.Face || face.Timestamp === undefined) {
-//             continue;
-//         }
-
-//         const frameBuffer = await extractFrameFromVideo(videoPath, face.Timestamp);
-//         const croppedFaceBuffer = await cropFace(face.Face, frameBuffer);
-
-//         const matches = await compareFaces(croppedFaceBuffer, faceKey);
-//         if (matches.length > 0) {
-//             console.log(`Match found at timestamp: ${face.Timestamp}`);
-//             matchingTimestamps.push(face.Timestamp);
-//         }
-//     }
-
-//     if (matchingTimestamps.length > 0) {
-//         const updateParams = {
-//             TableName: process.env.FACE_TIMESTAMPS_TABLE_NAME,
-//             Key: {
-//                 userID: { S: `${userID}` },
-//                 faceID: { S: `${faceKey}` },
-//                 videoID: { S: `${objectKey}` }
-//             },
-//             UpdateExpression: "SET timestamps = :timestamps",
-//             ExpressionAttributeValues: {
-//                 ":timestamps": { L: matchingTimestamps.map(ts => ({ N: ts.toString() })) }
-//             }
-//         };
-//         await dbClient.send(new UpdateItemCommand(updateParams));
-//         console.log(`Saved timestamps for face ${faceKey} in DynamoDB`);
-//     } else {
-//         console.log(`No matches found for face ${faceKey}`);
-//     }
-// }
-
 
 export const handler: SNSHandler = async (event: SNSEvent) => {
     // loop throught all SNS events
