@@ -110,10 +110,10 @@ export default function Library() {
                 console.log('Lambda response:', data);
             } else {
                 console.error('Lambda request failed:', response.statusText);
+                setErrorMessage("Error Lambda request failed");
             }
         } catch (error) {
             console.error('Error calling Lambda:', error);
-            setErrorMessage("Error creating moment");
         }
     }
 
