@@ -98,7 +98,7 @@ export default function Library() {
         //API CALL
         try {
             // Send a GET request to the Lambda function URL with the query string
-            const response = await fetch(`${LAMBDA_URL}?userID=${userID}&faceID=${faceID[0]}&timeLimit=${selectedTime}&song=${selectedSong}`);
+            const response = await fetch(`${LAMBDA_URL}?userID=${userID}&faceID=${faceID}&timeLimit=${selectedTime}&song=${selectedSong}`);
             if (response.ok) {
                 const data = await response.json();
                 console.log('Lambda response:', data);
