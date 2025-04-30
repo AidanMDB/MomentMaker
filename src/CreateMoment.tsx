@@ -46,7 +46,7 @@ export default function Library() {
             console.error("Error fetching media:", error);
             setErrorMessage("Error fetching media");
         }
-    }, [userID]);
+    }, [userID, setErrorMessage]);
 
     const fetchFaces = useCallback(async () => {
         if (!userID) return;
@@ -64,7 +64,7 @@ export default function Library() {
             setErrorMessage("Error fetching people");
 
         }
-    }, [userID]);
+    }, [userID, setErrorMessage]);
 
     useEffect(() => {
         const init = async () => {

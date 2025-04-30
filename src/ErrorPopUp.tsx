@@ -7,17 +7,14 @@ export default function ErrorPopUp() {
   if (!errorMessage) return null;
 
   const handleClose = () => {
-    setErrorMessage(null);
+    setErrorMessage(null); // Close the popup
   };
 
   return (
     <div className="error-popup">
       <div className="error-message">
         <p>{errorMessage}</p>
-        <button
-          className="error-close-button"
-          onClick={handleClose}
-        >
+        <button className="error-close-button" onClick={handleClose}>
           Close
         </button>
       </div>

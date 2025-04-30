@@ -18,7 +18,6 @@ export default function Library() {
     const [isUploading, setIsUploading] = useState(false);
 
     const { setErrorMessage } = useError();
-
     
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
@@ -70,7 +69,7 @@ export default function Library() {
             console.error("Error fetching media:", error);
             setErrorMessage("Error fetching media");
         }
-    }, [userID]);
+    }, [userID, setErrorMessage]);
     
     //Upon Loading
     useEffect(() => {

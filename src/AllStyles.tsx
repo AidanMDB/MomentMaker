@@ -16,7 +16,6 @@ export default function AllStyles() {
     const [activeTab, setActiveTab] = useState("library");
     const [user, setUser] = useState<{ email: string; id: string } | undefined>(undefined);
     const [showProfile, setShowProfile] = useState(false);
-    const { setErrorMessage } = useError();
     
     useEffect(() => {
         const init = async () => {
@@ -25,6 +24,8 @@ export default function AllStyles() {
     
         init();
     }, []);
+
+    const { setErrorMessage } = useError();
 
     const fetchUser = async () => {
         try {

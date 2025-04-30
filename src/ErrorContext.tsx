@@ -1,10 +1,15 @@
-import React, { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
-// Create context
-const ErrorContext = createContext<any>(null);
+// Define the type for the context value
+interface ErrorContextType {
+  errorMessage: string | null;
+  setErrorMessage: (message: string | null) => void;
+}
 
-// Provider component
-export const ErrorProvider = ({ children }: { children: React.ReactNode }) => {
+// Create context with the defined type
+const ErrorContext = createContext<ErrorContextType | undefined>(undefined);
+
+export const ErrorProvider = ({ children }: { children: ReactNode }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   return (
@@ -14,7 +19,10 @@ export const ErrorProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Custom hook to use the context
 export const useError = () => {
-  return useContext(ErrorContext);
+  const context = useContext(ErrorContext);
+  if (!context) {
+    throw new Error("useError must be used within an ErrorProvider");
+  }
+  return context;
 };
