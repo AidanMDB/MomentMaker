@@ -166,6 +166,7 @@ function parseVideo(inputPath: string, outputPath: string, start: number, end: n
             .setStartTime(start)
             .setDuration(end - start)
             .videoFilters(`scale=${OUTPUT_RESOLUTION.width}:${OUTPUT_RESOLUTION.height}:force_original_aspect_ratio=decrease,pad=${OUTPUT_RESOLUTION.width}:${OUTPUT_RESOLUTION.height}:(ow-iw)/2:(oh-ih)/2:color=black`)
+            .noAudio()
             .output(path.join(TMP_DIR, outputPath))
             .on("end", () => {
                 console.log(`Video parsed successfully: ${outputPath}`);
