@@ -203,14 +203,15 @@ export default function Library() {
         );
     };
 
-    const handleTimeChange = (value: number, unit: 'minutes' | 'seconds') => {
-        const minutes = unit === 'minutes' ? value : Math.floor(selectedTime / 60);
-        const seconds = unit === 'seconds' ? value : selectedTime % 60;
-      
-        const total = minutes * 60 + seconds;
-        const clamped = Math.min(total, 300);
-        setSelectedTime(clamped);
-      };
+    const updateTimeDisplay = (seconds: number): string => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes} minutes ${remainingSeconds} seconds`;
+    };
+
+    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSelectedTime(Number(e.target.value));
+    };
 
     return (
         <div className="container_moment">
@@ -244,32 +245,17 @@ export default function Library() {
                         ))}
                     </select>
                     <span className="feature_name"> Time Constraint </span>
-                    <div className="time_column">
-                        <select
-                            className="time_dropbox"
-                            value={Math.floor(selectedTime / 60)}
-                            onChange={(e) => handleTimeChange(Number(e.target.value), 'minutes')}
-                            >
-                            {[...Array(6)].map((_, i) => (
-                                <option key={i} value={i}>
-                                {i}
-                                </option>
-                            ))}
-                        </select>
-                        <label className="time_words">Minutes</label>
-                        <select
-                            className="time_dropbox"
-                            value={selectedTime % 60}
-                            onChange={(e) => handleTimeChange(Number(e.target.value), 'seconds')}
-                            size={1}
-                            >
-                            {[...Array(60)].map((_, i) => (
-                                <option key={i} value={i}>
-                                {i < 10 ? `0${i}` : i}
-                                </option>
-                            ))}
-                        </select>
-                        <label className="time_words">Seconds</label>
+                    <div className="time_slider-container">
+                        <input
+                            type="range"
+                            min="0"
+                            max="300"
+                            step="1"
+                            value={selectedTime}
+                            onChange={handleSliderChange}
+                            className="time_slider"
+                        />
+                        <div className="time-display">{updateTimeDisplay(selectedTime)}</div>
                     </div>
                 </div>
             </div>
