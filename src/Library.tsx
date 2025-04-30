@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { uploadData, list, getUrl, remove } from 'aws-amplify/storage';
 import { getCurrentUser } from 'aws-amplify/auth';
-import { useError } from "./ErrorContext";
+import ErrorPopUp from "./ErrorPopUp";
 import "./AllStyles.css"
 import "./Library.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -16,8 +16,7 @@ export default function Library() {
     const [songs, setSongs] = useState<{ name: string; url: URL }[]>([]);
     const [moments, setMoments] = useState<URL[]>([]);
     const [isUploading, setIsUploading] = useState(false);
-
-    const { setErrorMessage } = useError();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
@@ -275,6 +274,7 @@ export default function Library() {
                     ))
                 )}
             </div>
+            <ErrorPopUp errorMessage={errorMessage} setErrorMessage={setErrorMessage} />
         </div>
     );
 }

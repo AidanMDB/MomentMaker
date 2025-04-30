@@ -1,14 +1,16 @@
-import { useError } from "./ErrorContext";
 import "./ErrorPopUp.css";
 
-export default function ErrorPopUp() {
-  const { errorMessage, setErrorMessage } = useError();
+interface ErrorPopUpProps {
+  errorMessage: string | null;
+  setErrorMessage: (message: string | null) => void;
+}
 
-  if (!errorMessage) return null;
-
+export default function ErrorPopUp({ errorMessage, setErrorMessage }: ErrorPopUpProps) {
   const handleClose = () => {
     setErrorMessage(null); // Close the popup
   };
+
+  if (!errorMessage) return null;
 
   return (
     <div className="error-popup">

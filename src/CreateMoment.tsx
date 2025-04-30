@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { getCurrentUser } from 'aws-amplify/auth';
 import { list, getUrl } from 'aws-amplify/storage';
-import { useError } from "./ErrorContext";
 import { remove } from 'aws-amplify/storage';
+import ErrorPopUp from "./ErrorPopUp";
 import PreviewMoment from './PreviewMoment'
 import "./AllStyles.css"
 import "./CreateMoment.css"
@@ -22,8 +22,7 @@ export default function Library() {
     const [selectedTime, setSelectedTime] = useState<number>(60);
     const [isLoading, setIsLoading] = useState(false);
     const [moment, setMoment] = useState<string | undefined>(undefined);
-
-    const { setErrorMessage } = useError();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const openPreview = () => setPreviewOpen(true);
     const closePreview = async () => {
@@ -282,6 +281,7 @@ export default function Library() {
                 <p style={{ color: "white" }}>Creating Your Moment...</p>
             </div>
             )}
+            <ErrorPopUp errorMessage={errorMessage} setErrorMessage={setErrorMessage} />
         </div>
     );
 }

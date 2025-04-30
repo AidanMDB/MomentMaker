@@ -3,7 +3,6 @@ import icon from "./assets/MomentMakerIcon.ico"
 import { useNavigate } from "react-router-dom"
 import { signOut, getCurrentUser, fetchUserAttributes  } from 'aws-amplify/auth';
 import ErrorPopUp from "./ErrorPopUp";
-import { useError } from "./ErrorContext";
 import "./AllStyles.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
@@ -16,6 +15,7 @@ export default function AllStyles() {
     const [activeTab, setActiveTab] = useState("library");
     const [user, setUser] = useState<{ email: string; id: string } | undefined>(undefined);
     const [showProfile, setShowProfile] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     
     useEffect(() => {
         const init = async () => {
@@ -24,8 +24,6 @@ export default function AllStyles() {
     
         init();
     }, []);
-
-    const { setErrorMessage } = useError();
 
     const fetchUser = async () => {
         try {
@@ -94,7 +92,7 @@ export default function AllStyles() {
                     </div>
                 </div>
             </div>
-            <ErrorPopUp />
+            <ErrorPopUp errorMessage={errorMessage} setErrorMessage={setErrorMessage} />
         </main>
     );
 }
