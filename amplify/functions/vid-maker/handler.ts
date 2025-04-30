@@ -50,7 +50,13 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
     }
     console.log("UserID:", userID);
 
-    const faceID = event.queryStringParameters?.faceID;
+    // Get faceID from query string and parse into array
+    const faceIDParam = event.multiValueQueryStringParameters?.faceID || 
+    event.queryStringParameters?.faceID?.split(",") || [];
+
+    const faceIDs = faceIDParam.filter(id => id && id !== "undefined" && id.trim() !== "").map(id => id.trim());
+
+    console.log("Parsed faceIDs:", faceIDs);
 
     const timeLimit = event.queryStringParameters?.timeLimit;
     if (!timeLimit) {
@@ -72,32 +78,43 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         }
         console.log("Downloaded files:", downloadedFiles);
 
-        let faceIDData = null;
         let fileMatches = null;
         let fileNamesFromID: { filename: string; timestamp?: number }[] = [];
-        if(!faceID || faceID === "undefined" || faceID === "") {
-            console.log("No faceID provided, skipping DynamoDB lookup.");
+        if (faceIDs.length === 0) {
+            console.log("No valid faceIDs provided, skipping DynamoDB lookup.");
         } else {
-            console.log("Getting files from DynamoDB for userID:", userID, "and faceID:", faceID);
-            faceIDData = await getFilesfromFaceID(userID, faceID);
-            if (!faceIDData) {
-                console.warn("No faceID data found for userID:", userID, "and faceID:", faceID);
+            console.log("Fetching files from DynamoDB for faceIDs:", faceIDs);
+        
+            const allFaceIDResults: { filename: string; timestamp?: number }[] = [];
+        
+            for (const id of faceIDs) {
+                const faceIDData = await getFilesfromFaceID(userID, id);
+                if (!faceIDData) {
+                    console.warn(`No data found for faceID: ${id}`);
+                    continue;
+                }
+        
+                const parsed = faceIDData.map((loc: string | { videoKey: string; timestamp?: number }) => {
+                    if (typeof loc === "string") {
+                        return { filename: loc.split("/").pop()! };
+                    } else {
+                        return {
+                            filename: loc.videoKey.split("/").pop()!,
+                            timestamp: loc.timestamp
+                        };
+                    }
+                });
+        
+                allFaceIDResults.push(...parsed);
+            }
+        
+            if (allFaceIDResults.length === 0) {
+                console.warn("No faceID data found for any of the provided faceIDs.");
                 return { statusCode: 404, body: JSON.stringify({ error: "No faceID data found" }) };
             }
-            fileNamesFromID = faceIDData.map((loc: string | { videoKey: string, timestamp?: number }) => {
-                if (typeof loc === "string") {
-                    console.log("FaceID data is a string:", loc);
-                    return { filename: loc.split("/").pop()! };
-                } else {
-                    console.log("FaceID data is an object:", loc);
-                    return {
-                        filename: loc.videoKey.split("/").pop()!,
-                        timestamp: loc.timestamp
-                    };
-                }
-            });
-            
-            console.log("File names from faceID:", fileNamesFromID);
+        
+            fileNamesFromID = allFaceIDResults;
+            console.log("Aggregated filenames from faceIDs:", fileNamesFromID);
 
             fileMatches = downloadedFiles.filter(item => fileNamesFromID.map(file => file.filename).includes(item));
         }
@@ -201,7 +218,7 @@ function convertImageToVideo(imagePath: string, outputPath: string, duration = I
 
 async function handleFiles(fileList: string[], fileInfo: { filename: string; timestamp?: number }[]): Promise<string[]> {
     console.log("Handling files:", fileList);
-    const processedFiles: string[] = [];
+    let processedFiles: string[] = [];
 
     for (const file of fileList) {
         if (isVideo(file)) {
@@ -221,7 +238,7 @@ async function handleFiles(fileList: string[], fileInfo: { filename: string; tim
                     console.log("No timestamps found for video, not using it");
                 } else {
                     const CLUSTER_THRESHOLD = 5000; // 5 seconds in ms
-                    const BUFFER = 2000; // optional extra time in ms after the last timestamp
+                    const BUFFER = 1000; // optional extra time in ms after the last timestamp
                     const sortedTimestamps = [...timestamps].sort((a, b) => a - b);
 
                     let clusterStart = sortedTimestamps[0] || 0;
@@ -251,9 +268,14 @@ async function handleFiles(fileList: string[], fileInfo: { filename: string; tim
             console.log(`Skipping unsupported file: ${file}`);
         }
     }
+    console.log("Processed files before shuffling:", processedFiles);
 
-    console.log("Processed files (shuffled):", processedFiles);
-    return shuffleArray(processedFiles);
+    const shuffleCount = Math.floor(Math.random() * 5) + 1;
+    console.log(`Shuffling files ${shuffleCount} times`);
+    for (let i = 0; i < shuffleCount; i++) {
+        processedFiles = shuffleArray(processedFiles) // Shuffle the array
+    }
+    return processedFiles;
 }
 
 function shuffleArray(array: string[]): string[] {
@@ -263,7 +285,7 @@ function shuffleArray(array: string[]): string[] {
       [arr[i], arr[j]] = [arr[j], arr[i]]; // swap elements
     }
     return arr;
-  }  
+}  
 
 function mergeMedia(clips: string[], outputPath: string, songFile?: string): Promise<string> {
     console.log("Merging media clips:", clips);
