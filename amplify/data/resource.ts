@@ -19,7 +19,17 @@ const schema = a.schema({
     imageLocations: a.string().array()
   })
   .identifier(["userID", "faceID"])
-  .authorization((allow) => [allow.publicApiKey()])
+  .authorization((allow) => [allow.publicApiKey()]),
+
+  FaceTimestamps: a.model({
+    userID: a.id().required(),
+    faceID: a.string().required(),
+    videoID: a.string().required(),
+    timestamps: a.string().array()
+  })
+  .identifier(["userID", "faceID", "videoID"])
+  .authorization((allow) => [allow.publicApiKey()]),
+
 }       );
 //.authorization((allow) => [allow.publicApiKey(), allow.resource(myUploadFunction), allow.resource(imageAnalyzer), allow.resource(videoAnalyzer), allow.resource(zipFileExtractor)]
 //);
