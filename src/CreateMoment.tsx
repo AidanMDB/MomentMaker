@@ -210,7 +210,16 @@ export default function Library() {
     };
 
     const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSelectedTime(Number(e.target.value));
+        let newValue = Number(e.target.value);
+        
+        if ([60, 120, 180, 240, 300].includes(newValue)) {
+            setSelectedTime(newValue);
+            setTimeout(() => {
+                setSelectedTime(newValue);
+            }, 1000);
+        } else {
+            setSelectedTime(newValue);
+        }
     };
 
     return (
