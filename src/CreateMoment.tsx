@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getCurrentUser } from 'aws-amplify/auth';
 import { list, getUrl } from 'aws-amplify/storage';
 import { remove } from 'aws-amplify/storage';
+import ErrorPopUp from "./ErrorPopUp";
 import PreviewMoment from './PreviewMoment'
 import "./AllStyles.css"
 import "./CreateMoment.css"
@@ -21,6 +22,7 @@ export default function Library() {
     const [selectedTime, setSelectedTime] = useState<number>(60);
     const [isLoading, setIsLoading] = useState(false);
     const [moment, setMoment] = useState<string | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const openPreview = () => setPreviewOpen(true);
     const closePreview = async () => {
@@ -41,8 +43,9 @@ export default function Library() {
             setSelectedSong(songNames[0])
         } catch (error) {
             console.error("Error fetching media:", error);
+            setErrorMessage("Error fetching media");
         }
-    }, [userID]);
+    }, [userID, setErrorMessage]);
 
     const fetchFaces = useCallback(async () => {
         if (!userID) return;
@@ -57,8 +60,10 @@ export default function Library() {
             setPeople(faceUrls);
         } catch (error) {
             console.error("Error fetching people:", error);
+            setErrorMessage("Error fetching people");
+
         }
-    }, [userID]);
+    }, [userID, setErrorMessage]);
 
     useEffect(() => {
         const init = async () => {
@@ -82,6 +87,7 @@ export default function Library() {
             setUserID(user.userId);
         } catch (error) {
             console.error("Error fetching user:", error);
+            setErrorMessage("Error fetching user");
         }
     };
 
@@ -107,6 +113,7 @@ export default function Library() {
             }
         } catch (error) {
             console.error('Error calling Lambda:', error);
+            setErrorMessage("Error creating moment");
         }
     }
 
@@ -131,6 +138,7 @@ export default function Library() {
             setMoment(urlOutput.url.toString());
         } catch (error) {
             console.error("Error fetching latest video:", error);
+            setErrorMessage("Error fetching latest video");
         }
     };
 
@@ -152,6 +160,7 @@ export default function Library() {
             await remove({ path: latestVideo.path });
         } catch (error) {
             console.error("Error removing latest moment:", error);
+            setErrorMessage("Error removing latest moment");
         }
     }
 
@@ -161,7 +170,7 @@ export default function Library() {
             await createVideo();
             await fetchLatestVideo();
         } catch (err) {
-            alert("Creating Moment failed:");
+            setErrorMessage("Error creating moment");
         } finally {
             setIsLoading(false);
         }
@@ -175,7 +184,7 @@ export default function Library() {
             await createVideo();
             await fetchLatestVideo();
         } catch (err) {
-            alert("Creating Moment failed:");
+            setErrorMessage("Error creating moment");
         } finally {
             setIsLoading(false);
         }
@@ -194,14 +203,24 @@ export default function Library() {
         );
     };
 
-    const handleTimeChange = (value: number, unit: 'minutes' | 'seconds') => {
-        const minutes = unit === 'minutes' ? value : Math.floor(selectedTime / 60);
-        const seconds = unit === 'seconds' ? value : selectedTime % 60;
-      
-        const total = minutes * 60 + seconds;
-        const clamped = Math.min(total, 300);
-        setSelectedTime(clamped);
-      };
+    const updateTimeDisplay = (seconds: number): string => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes} minutes ${remainingSeconds} seconds`;
+    };
+
+    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = Number(e.target.value);
+        
+        if ([60, 120, 180, 240, 300].includes(newValue)) {
+            setSelectedTime(newValue);
+            setTimeout(() => {
+                setSelectedTime(newValue);
+            }, 1000);
+        } else {
+            setSelectedTime(newValue);
+        }
+    };
 
     return (
         <div className="container_moment">
@@ -235,32 +254,17 @@ export default function Library() {
                         ))}
                     </select>
                     <span className="feature_name"> Time Constraint </span>
-                    <div className="time_column">
-                        <select
-                            className="time_dropbox"
-                            value={Math.floor(selectedTime / 60)}
-                            onChange={(e) => handleTimeChange(Number(e.target.value), 'minutes')}
-                            >
-                            {[...Array(6)].map((_, i) => (
-                                <option key={i} value={i}>
-                                {i}
-                                </option>
-                            ))}
-                        </select>
-                        <label className="time_words">Minutes</label>
-                        <select
-                            className="time_dropbox"
-                            value={selectedTime % 60}
-                            onChange={(e) => handleTimeChange(Number(e.target.value), 'seconds')}
-                            size={1}
-                            >
-                            {[...Array(60)].map((_, i) => (
-                                <option key={i} value={i}>
-                                {i < 10 ? `0${i}` : i}
-                                </option>
-                            ))}
-                        </select>
-                        <label className="time_words">Seconds</label>
+                    <div className="time_slider-container">
+                        <input
+                            type="range"
+                            min="0"
+                            max="300"
+                            step="1"
+                            value={selectedTime}
+                            onChange={handleSliderChange}
+                            className="time_slider"
+                        />
+                        <div className="time-display">{updateTimeDisplay(selectedTime)}</div>
                     </div>
                 </div>
             </div>
@@ -272,6 +276,7 @@ export default function Library() {
                 <p style={{ color: "white" }}>Creating Your Moment...</p>
             </div>
             )}
+            <ErrorPopUp errorMessage={errorMessage} setErrorMessage={setErrorMessage} />
         </div>
     );
 }
