@@ -9,6 +9,7 @@ import { storage } from './storage/resource';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
 import { EventType } from 'aws-cdk-lib/aws-s3';
+import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
 import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications';
 import { PolicyStatement, ServicePrincipal, Role } from 'aws-cdk-lib/aws-iam';
 import * as sns from 'aws-cdk-lib/aws-sns';
@@ -146,7 +147,7 @@ videoAnalyzerFunction.addToRolePolicy(
   })
 )
 
-// Give videoAnalyzer permission to use AWS rekognition AI
+// Give video starter permission to use AWS rekognition AI
 videoStarterFunction.addToRolePolicy(
   new PolicyStatement({
     actions: 
@@ -157,12 +158,21 @@ videoStarterFunction.addToRolePolicy(
       'dynamoDB:UpdateItem', 
       'dynamoDB:GetItem',
       'S3:PutObject',
-      'S3:GetObject'
+      'S3:GetObject',
+      'iam:PassRole',
     ],
     resources: ["*"],
   })
 )
 
+videoAnalyzerFunction.addPermission('AllowInvokeSNS',
+  {
+    principal: new ServicePrincipal('sns.amazonaws.com'),
+    sourceArn: videoSNS.topicArn,
+  }
+)
+
+videoSNS.addSubscription(new subs.LambdaSubscription(videoAnalyzerFunction));
 
 // Adds notifications to the S3 bucket so mediaUpload function can be triggered when a file is uploaded to the bucket
 storageS3.addEventNotification(
