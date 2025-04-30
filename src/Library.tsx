@@ -146,6 +146,12 @@ export default function Library() {
                 setErrorMessage("Invalid file type. Please select a JPEG, PNG, MP4, or MP3 file.");
                 return;
             }
+
+            const maxSize = 50 * 1024 * 1024;
+            if (file.size > maxSize) {
+                setErrorMessage("File size exceeds the 50MB limit. Please select a smaller file.");
+                return;
+            }
     
             const type = file.type.split('/')[0];
     
