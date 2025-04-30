@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { uploadData, list, getUrl, remove } from 'aws-amplify/storage';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { useError } from "./ErrorContext";
 import "./AllStyles.css"
 import "./Library.css"
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -15,6 +16,9 @@ export default function Library() {
     const [songs, setSongs] = useState<{ name: string; url: URL }[]>([]);
     const [moments, setMoments] = useState<URL[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+
+    const { setErrorMessage } = useError();
+
     
     const handleMediaTabClick = (option: string) => {
         setActiveTab(option);
@@ -64,6 +68,7 @@ export default function Library() {
             setMoments(momentUrls);
         } catch (error) {
             console.error("Error fetching media:", error);
+            setErrorMessage("Error fetching media");
         }
     }, [userID]);
     
@@ -89,6 +94,7 @@ export default function Library() {
             setUserID(user.userId);
         } catch (error) {
             console.error("Error fetching user:", error);
+            setErrorMessage("Error fetching user");
         }
     };
 
@@ -120,6 +126,7 @@ export default function Library() {
             setSelectedDeletion([]);
         } catch (error) {
             console.error(`Error deleting items from ${activeTab}:`, error);
+            setErrorMessage(`Error deleting items from ${activeTab}`);
         }
     };
 
@@ -138,7 +145,7 @@ export default function Library() {
             const file = event.target.files[0];
     
             if (!allowedTypes.includes(file.type)) {
-                alert("Invalid file type. Please select a JPEG, PNG, MP4, or MP3 file.");
+                setErrorMessage("Invalid file type. Please select a JPEG, PNG, MP4, or MP3 file.");
                 return;
             }
     
@@ -186,6 +193,7 @@ export default function Library() {
                 await fetchMedia();
             } catch (error) {
                 console.error("Error uploading media:", error);
+                setErrorMessage("Error uploading media");
             } finally {
                 setIsUploading(false);
                 if (fileInputRef.current) {

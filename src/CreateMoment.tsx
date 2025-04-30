@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getCurrentUser } from 'aws-amplify/auth';
 import { list, getUrl } from 'aws-amplify/storage';
+import { useError } from "./ErrorContext";
 import { remove } from 'aws-amplify/storage';
 import PreviewMoment from './PreviewMoment'
 import "./AllStyles.css"
@@ -22,6 +23,8 @@ export default function Library() {
     const [isLoading, setIsLoading] = useState(false);
     const [moment, setMoment] = useState<string | undefined>(undefined);
 
+    const { setErrorMessage } = useError();
+
     const openPreview = () => setPreviewOpen(true);
     const closePreview = async () => {
         await handleDeleteMoment();
@@ -41,6 +44,7 @@ export default function Library() {
             setSelectedSong(songNames[0])
         } catch (error) {
             console.error("Error fetching media:", error);
+            setErrorMessage("Error fetching media");
         }
     }, [userID]);
 
@@ -57,6 +61,8 @@ export default function Library() {
             setPeople(faceUrls);
         } catch (error) {
             console.error("Error fetching people:", error);
+            setErrorMessage("Error fetching people");
+
         }
     }, [userID]);
 
@@ -82,6 +88,7 @@ export default function Library() {
             setUserID(user.userId);
         } catch (error) {
             console.error("Error fetching user:", error);
+            setErrorMessage("Error fetching user");
         }
     };
 
@@ -107,6 +114,7 @@ export default function Library() {
             }
         } catch (error) {
             console.error('Error calling Lambda:', error);
+            setErrorMessage("Error creating moment");
         }
     }
 
@@ -131,6 +139,7 @@ export default function Library() {
             setMoment(urlOutput.url.toString());
         } catch (error) {
             console.error("Error fetching latest video:", error);
+            setErrorMessage("Error fetching latest video");
         }
     };
 
@@ -152,6 +161,7 @@ export default function Library() {
             await remove({ path: latestVideo.path });
         } catch (error) {
             console.error("Error removing latest moment:", error);
+            setErrorMessage("Error removing latest moment");
         }
     }
 
@@ -161,7 +171,7 @@ export default function Library() {
             await createVideo();
             await fetchLatestVideo();
         } catch (err) {
-            alert("Creating Moment failed:");
+            setErrorMessage("Error creating moment");
         } finally {
             setIsLoading(false);
         }
@@ -175,7 +185,7 @@ export default function Library() {
             await createVideo();
             await fetchLatestVideo();
         } catch (err) {
-            alert("Creating Moment failed:");
+            setErrorMessage("Error creating moment");
         } finally {
             setIsLoading(false);
         }
