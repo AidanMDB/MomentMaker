@@ -21,6 +21,7 @@ export default function Library() {
     const [selectedSong, setSelectedSong] = useState<string | undefined>(undefined);
     const [selectedTime, setSelectedTime] = useState<number>(60);
     const [isLoading, setIsLoading] = useState(false);
+    const [isRefreshLoading, setIsRefreshLoading] = useState(false);
     const [moment, setMoment] = useState<string | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -194,6 +195,49 @@ export default function Library() {
     const handleSave = () => {
         setPreviewOpen(false);
     }
+
+    const fetchRefreshFaces = async () => {
+        setIsRefreshLoading(true);
+      
+        const startTime = Date.now();
+        const timeoutDuration = 2 * 60 * 1000; // 2 minutes
+        const pollInterval = 5000; // check every 5 seconds
+      
+        const initialCount = people.length;
+      
+        const poll = async () => {
+          try {
+            const { items: faceResults } = await list({ path: `user-media/${userID}/faces/` });
+      
+            if (faceResults.length > initialCount) {
+              const faceUrls = await Promise.all(
+                faceResults.map(async (file) => {
+                  const urlOutput = await getUrl({ path: file.path });
+                  return urlOutput.url;
+                })
+              );
+              setPeople(faceUrls);
+              setIsRefreshLoading(false);
+              return;
+            }
+      
+            const elapsedTime = Date.now() - startTime;
+            if (elapsedTime < timeoutDuration) {
+              setTimeout(poll, pollInterval);
+            } else {
+              setIsRefreshLoading(false);
+              setErrorMessage("No new faces detected.");
+            }
+          } catch (error) {
+            console.error("Error fetching people:", error);
+            setErrorMessage("Error fetching people");
+            setIsRefreshLoading(false);
+          }
+        };
+      
+        poll();
+      };
+      
       
     const togglePersonSelection = (src: string) => {
         setSelectedPersons((prev) =>
@@ -228,6 +272,9 @@ export default function Library() {
                 <div className="bottom_container">
                     <div className="topbar_customization">
                         <h2 style={{ color: '#9c6bae', cursor: "default" }}>Person Identification</h2>
+                        <button className="refresh-button" onClick={fetchRefreshFaces}>
+                            <i className={`fas fa-sync-alt ${isRefreshLoading ? 'fa-spin' : ''}`} />
+                        </button>
                     </div>
                     <div className="face-grid">
                         {people.map((src, index) => (

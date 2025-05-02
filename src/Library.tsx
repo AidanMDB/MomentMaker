@@ -153,7 +153,7 @@ export default function Library() {
                 setErrorMessage("Video size exceeds the 100MB limit. Please select a smaller file.");
                 return;
             }
-            else if (file.size > maxFileSize) {
+            else if (file.size > maxFileSize && file.type != "video/mp4") {
                 setErrorMessage("File size exceeds the 10MB limit. Please select a smaller file.");
                 return;
             }
