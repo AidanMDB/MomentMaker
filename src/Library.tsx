@@ -147,9 +147,19 @@ export default function Library() {
                 return;
             }
 
-            const maxSize = 50 * 1024 * 1024;
-            if (file.size > maxSize) {
-                setErrorMessage("File size exceeds the 50MB limit. Please select a smaller file.");
+            const maxPhotoSize = 5 * 1024 * 1024;
+            const maxSongSize = 10 * 1024 * 1024;
+            const maxVideoSize = 100 * 1024 * 1024;
+            if (file.size > maxVideoSize && file.type == "video/mp4") {
+                setErrorMessage("Video size exceeds the 100MB limit. Please select a smaller file.");
+                return;
+            }
+            else if (file.size > maxPhotoSize && (file.type == "image/jpeg" || file.type == "image/jpg" || file.type == "image/png")) {
+                setErrorMessage("File size exceeds the 5MB limit. Please select a smaller file.");
+                return;
+            }
+            else if (file.size > maxSongSize && (file.type == "audio/mp3" || file.type == "audio/mpeg")) {
+                setErrorMessage("File size exceeds the 10MB limit. Please select a smaller file.");
                 return;
             }
     

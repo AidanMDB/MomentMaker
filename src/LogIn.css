@@ -20,7 +20,7 @@
   }
   
   .amplify-button:hover {
-    background-color: var(--light-purple) !important;
+    background-color: var(--dark-purple) !important;
   }
   
   .amplify-field__control:focus {
@@ -32,7 +32,7 @@
   }
   
   .amplify-tabs__item:hover {
-    color: var(--light-purple) !important;
+    color: var(--dark-purple) !important;
   }
   
   .amplify-tabs__item--active {
@@ -58,6 +58,6 @@
   }
 
   .amplify-button--small.amplify-button--link:hover {
-    color: var(--light-purple) !important;
+    color: var(--dark-purple) !important;
   }
   

@@ -45,6 +45,24 @@
     box-shadow: 0 1px 3px var(--darker-gray);
 }
 
+.refresh-button {
+  background-color: transparent;
+  border: none;
+  color: var(--light-purple);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.refresh-button:hover {
+  color: var(--dark-purple);
+}
+
+.refresh-button i {
+  pointer-events: none;
+}
+
 .submit_button {
     background-color: var(--light-purple);
     color: var(--light-gray);
@@ -56,6 +74,10 @@
     transition: background 0.3s;
     margin-left: auto;
     width: 170px;
+}
+
+.submit_button:hover {
+  background: var(--dark-purple);
 }
 
 .feature_name {
@@ -146,6 +168,10 @@
     cursor: pointer;
     -webkit-appearance: none;
   }
+
+  .time_slider::-webkit-slider-thumb:hover {
+    background: var(--dark-purple);
+  }
   
   .time-display {
     width: 200px;
@@ -173,7 +199,7 @@
 }
 
 .face-grid {
-  max-height: 250px;
+  max-height: 242px;
   overflow-y: scroll;
   display: flex;
   flex-wrap: wrap;

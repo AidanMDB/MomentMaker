@@ -34,6 +34,10 @@
     color: var(--light-purple);
   }
 
+  .close-button:hover {
+    color: var(--dark-purple);
+}
+
   .title {
     margin-bottom: 0px;
     font-size: 30px;
@@ -72,5 +76,9 @@
     cursor: pointer;
     transition: background 0.3s;
     width: 150px;
+}
+
+.save_button:hover, .redo_button:hover {
+  background: var(--dark-purple);
 }
   
