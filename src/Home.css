@@ -18,6 +18,10 @@
     transition: 0.3s;
   }
 
+  .login:hover {
+    color: var(--dark-purple);
+  }
+
 .logo {
     background-color: var(--light-gray);
     display: flex;

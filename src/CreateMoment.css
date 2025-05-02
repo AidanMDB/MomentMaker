@@ -58,6 +58,10 @@
     width: 170px;
 }
 
+.submit_button:hover {
+  background: var(--dark-purple);
+}
+
 .feature_name {
     color: var(--light-purple);
     font-size: 18px;
@@ -145,6 +149,10 @@
     border-radius: 50%;
     cursor: pointer;
     -webkit-appearance: none;
+  }
+
+  .time_slider::-webkit-slider-thumb:hover {
+    background: var(--dark-purple);
   }
   
   .time-display {

@@ -26,6 +26,7 @@
 
 .media_clickable_word:hover {
     cursor: pointer;
+    color: var(--dark-purple);
 }
 
 .media_clickable_word.active {
@@ -57,6 +58,10 @@
     padding-right: 5px;
 }
 
+.upload_button:hover {
+    color: var(--dark-purple);
+  }
+
 .delete_button {
     font-size: 30px;
     color: var(--light-purple);
@@ -67,6 +72,10 @@
     align-items: center;
     padding-right: 15px;
 }
+
+.delete_button:hover {
+    color: var(--dark-purple);
+  }
 
 .media_grid {
     display: grid;
