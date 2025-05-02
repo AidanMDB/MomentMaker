@@ -147,9 +147,14 @@ export default function Library() {
                 return;
             }
 
-            const maxSize = 50 * 1024 * 1024;
-            if (file.size > maxSize) {
-                setErrorMessage("File size exceeds the 50MB limit. Please select a smaller file.");
+            const maxVideoSize = 100 * 1024 * 1024;
+            const maxFileSize = 10 * 1024 * 1024;
+            if (file.size > maxVideoSize && file.type == "video/mp4") {
+                setErrorMessage("Video size exceeds the 100MB limit. Please select a smaller file.");
+                return;
+            }
+            else if (file.size > maxFileSize) {
+                setErrorMessage("File size exceeds the 10MB limit. Please select a smaller file.");
                 return;
             }
     
