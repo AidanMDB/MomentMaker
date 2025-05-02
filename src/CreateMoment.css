@@ -199,7 +199,7 @@
 }
 
 .face-grid {
-  max-height: 250px;
+  max-height: 242px;
   overflow-y: scroll;
   display: flex;
   flex-wrap: wrap;
