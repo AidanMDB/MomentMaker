@@ -52,8 +52,6 @@ User manual can found in file labeled USERMANUAL.md
 - **API**: AWS API Gateway
 - **AI Face Detection**: AWS Rekognition
 - **Compute**: AWS Lambda Funciton's
-- **
-- EVERYONE ADD WHAT YOU USED
 
 ## Developers
 
