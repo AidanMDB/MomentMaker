@@ -16,6 +16,7 @@ export default function Library() {
     const [songs, setSongs] = useState<{ name: string; url: URL }[]>([]);
     const [moments, setMoments] = useState<URL[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     
     const handleMediaTabClick = (option: string) => {
@@ -128,6 +129,44 @@ export default function Library() {
         }
     };
 
+    const handleDownloadClick = async () => {
+        if (selectedDeletion.length === 0) return;
+
+        setIsDownloading(true)
+    
+        try {
+            for (const fileUrl of selectedDeletion) {
+                const url = new URL(fileUrl.toString());
+                const keyMatch = url.pathname.match(/user-media\/.+/);
+                if (keyMatch) {
+                    const decodedKey = decodeURIComponent(keyMatch[0]);
+    
+                    // Get the public URL
+                    const { url: signedUrl } = await getUrl({ path: decodedKey });
+    
+                    // Fetch and trigger download
+                    const response = await fetch(signedUrl.toString());
+                    const blob = await response.blob();
+    
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = decodedKey.split('/').pop() || 'file';
+                    document.body.appendChild(link);
+                    link.click();
+    
+                    link.remove();
+                    URL.revokeObjectURL(link.href);
+                }
+            }
+        } catch (error) {
+            console.error(`Error downloading items from ${activeTab}:`, error);
+            setErrorMessage(`Error downloading items from ${activeTab}`);
+        }
+        finally {
+            setIsDownloading(false)
+        }
+    };
+
     //Upload
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "video/mp4", "audio/mp3", "audio/mpeg"];
 
@@ -232,9 +271,14 @@ export default function Library() {
                 <span className={`media_clickable_word ${activeTab === 'Moments' ? 'active' : ''}`} onClick={() => handleMediaTabClick('Moments')}> Moments </span>
                 <div className="right_buttons">
                     {selectedDeletion.length > 0 && (
-                        <button className="delete_button" onClick={handleDeleteClick}>
-                            <i className="fas fa-trash"></i>
-                        </button>
+                        <div>
+                            <button className="delete_button" onClick={handleDeleteClick}>
+                                <i className="fas fa-trash"></i>
+                            </button>
+                            <button className="download_button" onClick={handleDownloadClick}>
+                                {isDownloading ? <i className="fas fa-spinner fa-spin" /> : <i className="fas fa-download" />}
+                            </button>
+                        </div>
                     )}
                     <input
                         type="file"

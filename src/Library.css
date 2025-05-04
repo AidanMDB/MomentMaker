@@ -62,6 +62,21 @@
     color: var(--dark-purple);
   }
 
+  .download_button {
+    font-size: 30px;
+    color: var(--light-purple);
+    background: transparent;
+    border: none;
+    padding-top: 5px;
+    cursor: pointer;
+    align-items: center;
+    padding-right: 15px;
+}
+
+.download_button:hover {
+    color: var(--dark-purple);
+  }
+
 .delete_button {
     font-size: 30px;
     color: var(--light-purple);
