@@ -22,7 +22,7 @@ This guide will help you navigate the web-based platform, from creating an accou
   - All deleted media is removed from associated **AWS S3 bucket**.
 - ![image](https://github.com/user-attachments/assets/21943c23-4dd2-4354-97bb-6f0d8003a956) **Download Media**
   - Select desried media then download icon to download media to person device.
-  - Downloaded as a `.mp4` file.
+  - Downloaded as it's respective file extension.
 - ![image](https://github.com/user-attachments/assets/9e865cad-3e59-4b85-8328-cd80fa33cd2c) **Upload Media**
   - Select upload icon to upload media.
   - Supported file types: `.jpg`, `.jpeg`, `.png`, `.mp3`, `.mp4`, `.mpeg`
