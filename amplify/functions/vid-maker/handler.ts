@@ -23,8 +23,8 @@ const pipe = promisify(pipeline);
 const s3Client = new S3Client({ region: "us-east-1" });
 const dbclient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dbclient);
-//const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fcbuq5j5ksnw";
-const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
+const BUCKET_NAME = "amplify-amplifyvitereactt-mediastoragebucket2b6d90-fcbuq5j5ksnw";
+//const BUCKET_NAME = "amplify-d1mzyzgpuskuft-ma-mediastoragebucket2b6d90-qdrepwmd6l9v";
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     console.log("Handler invoked");
@@ -237,8 +237,8 @@ async function handleFiles(fileList: string[], fileInfo: { filename: string; tim
                 if (timestamps.length === 0) {
                     console.log("No timestamps found for video, not using it");
                 } else {
-                    const CLUSTER_THRESHOLD = 5000; // 5 seconds in ms
-                    const BUFFER = 1000; // optional extra time in ms after the last timestamp
+                    const CLUSTER_THRESHOLD = 3000; // 1 seconds in ms
+                    const BUFFER = 500; // optional extra time in ms after the last timestamp
                     const sortedTimestamps = [...timestamps].sort((a, b) => a - b);
 
                     let clusterStart = sortedTimestamps[0] || 0;
